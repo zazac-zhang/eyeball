@@ -32,7 +32,7 @@ export function KinematicsPanel() {
 
   return (
     <div className="pointer-events-auto min-w-[240px] rounded-lg border border-blue-500/30 bg-gray-950/85 p-4 text-blue-100 backdrop-blur">
-      <h3 className="mb-3 border-b border-blue-500/20 pb-2 text-sm font-semibold uppercase tracking-wider text-blue-400">
+      <h3 className="mb-3 border-b border-blue-500/20 pb-2 text-sm font-semibold tracking-wider text-blue-400 uppercase">
         Kinematics
       </h3>
       {pose ? (
@@ -40,33 +40,47 @@ export function KinematicsPanel() {
           <tbody>
             <tr>
               <td className="py-1 pr-3 text-blue-300/70">Phase</td>
-              <td className={`py-1 text-right font-mono text-xs ${phaseColorMap[phase] ?? 'text-blue-100'}`}>
+              <td
+                className={`py-1 text-right font-mono text-xs ${phaseColorMap[phase] ?? 'text-blue-100'}`}
+              >
                 {phase}
               </td>
             </tr>
             <tr>
               <td className="py-1 pr-3 text-blue-300/70">Tip X</td>
-              <td className="py-1 text-right font-mono text-xs">{pose.tipPosition[0].toFixed(2)} mm</td>
+              <td className="py-1 text-right font-mono text-xs">
+                {pose.tipPosition[0].toFixed(2)} mm
+              </td>
             </tr>
             <tr>
               <td className="py-1 pr-3 text-blue-300/70">Tip Y</td>
-              <td className="py-1 text-right font-mono text-xs">{pose.tipPosition[1].toFixed(2)} mm</td>
+              <td className="py-1 text-right font-mono text-xs">
+                {pose.tipPosition[1].toFixed(2)} mm
+              </td>
             </tr>
             <tr>
               <td className="py-1 pr-3 text-blue-300/70">Tip Z</td>
-              <td className="py-1 text-right font-mono text-xs">{pose.tipPosition[2].toFixed(2)} mm</td>
+              <td className="py-1 text-right font-mono text-xs">
+                {pose.tipPosition[2].toFixed(2)} mm
+              </td>
             </tr>
             <tr>
               <td className="py-1 pr-3 text-blue-300/70">Insertion</td>
-              <td className="py-1 text-right font-mono text-xs">{pose.insertionDepth.toFixed(2)} mm</td>
+              <td className="py-1 text-right font-mono text-xs">
+                {pose.insertionDepth.toFixed(2)} mm
+              </td>
             </tr>
             <tr>
               <td className="py-1 pr-3 text-blue-300/70">Tilt Alpha</td>
-              <td className="py-1 text-right font-mono text-xs">{(pose.tiltAlpha * (180 / Math.PI)).toFixed(1)} deg</td>
+              <td className="py-1 text-right font-mono text-xs">
+                {(pose.tiltAlpha * (180 / Math.PI)).toFixed(1)} deg
+              </td>
             </tr>
             <tr>
               <td className="py-1 pr-3 text-blue-300/70">Tilt Beta</td>
-              <td className="py-1 text-right font-mono text-xs">{(pose.tiltBeta * (180 / Math.PI)).toFixed(1)} deg</td>
+              <td className="py-1 text-right font-mono text-xs">
+                {(pose.tiltBeta * (180 / Math.PI)).toFixed(1)} deg
+              </td>
             </tr>
             {rcmPoint && (
               <tr>
@@ -79,7 +93,7 @@ export function KinematicsPanel() {
           </tbody>
         </table>
       ) : (
-        <p className="text-sm italic text-blue-300/50">Click on the eyeball to place the needle</p>
+        <p className="text-sm text-blue-300/50 italic">Click on the eyeball to place the needle</p>
       )}
     </div>
   );

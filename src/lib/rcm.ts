@@ -4,14 +4,38 @@ import { raySphereIntersect } from './sphereIntersect';
 
 export type { NeedlePose } from '../types';
 
+/**
+ * Configuration for computing a Remote Center of Motion (RCM) constrained needle pose.
+ *
+ * The RCM is a kinematic constraint used in surgical robotics: the needle pivots
+ * around a fixed point on the tissue surface, ensuring the entry point is never
+ * displaced laterally — only rotated and translated along the needle axis.
+ */
 export interface RCMConfig {
+  /** The RCM point on the eyeball surface where the needle enters */
   rcmPoint: Vec3;
+  /** Outward-pointing surface normal at the RCM point */
   surfaceNormal: Vec3;
+  /** Maximum insertion depth in mm */
   maxInsertionDepth: number;
+  /** Maximum tilt angle in radians */
   maxTiltAngle: number;
 }
 
-/** Compute needle pose from RCM config and joint angles. */
+/**
+ * Computes the full needle pose (tip position, shaft direction, and 4x4 transform matrix)
+ * given an RCM configuration and two tilt angles.
+ *
+ * The needle pose satisfies the RCM constraint: the needle always passes through
+ * the RCM point, regardless of tilt angles. The shaft direction is computed via
+ * spherical parameterization in the local orthonormal basis at the RCM point.
+ *
+ * @param config - RCM configuration including entry point and surface normal
+ * @param alpha - Tilt/elevation angle in radians (0 = straight along normal)
+ * @param beta - Azimuth/rotation angle in radians (direction around the normal)
+ * @param d - Insertion depth in mm (distance from RCM point along shaft direction)
+ * @returns Full needle pose with tip position, shaft direction, and transform matrix
+ */
 export function computeNeedlePose(
   config: RCMConfig,
   alpha: number,
@@ -22,11 +46,7 @@ export function computeNeedlePose(
 
   // Build orthonormal basis at RCM point
   // z-axis = inward surface normal (pointing into eyeball)
-  const zAxis: Vec3 = [
-    -surfaceNormal[0],
-    -surfaceNormal[1],
-    -surfaceNormal[2],
-  ];
+  const zAxis: Vec3 = [-surfaceNormal[0], -surfaceNormal[1], -surfaceNormal[2]];
 
   // x-axis = perpendicular to z-axis
   const worldUp: Vec3 = [0, 1, 0];
@@ -58,7 +78,19 @@ export function computeNeedlePose(
   };
 }
 
-/** Compute the RCM point from a ray hitting the eyeball sphere. */
+/**
+ * Computes the RCM point by intersecting a click ray with the eyeball sphere.
+ *
+ * When the user clicks on the eyeball, this function finds the 3D hit point
+ * on the sphere surface and computes the outward-pointing surface normal.
+ * This defines the Remote Center of Motion for the surgical needle.
+ *
+ * @param rayOrigin - Origin of the ray (camera position)
+ * @param rayDirection - Normalized direction of the ray
+ * @param eyeballCenter - Center of the eyeball sphere
+ * @param eyeballRadius - Radius of the eyeball sphere
+ * @returns Object containing the RCM hit point and surface normal, or null if no intersection
+ */
 export function computeRCMFromRay(
   rayOrigin: Vec3,
   rayDirection: Vec3,
@@ -79,18 +111,17 @@ export function computeRCMFromRay(
 
 // --- Vector math helpers ---
 
+/** Cross product of two 3D vectors. */
 function cross(a: Vec3, b: Vec3): Vec3 {
-  return [
-    a[1] * b[2] - a[2] * b[1],
-    a[2] * b[0] - a[0] * b[2],
-    a[0] * b[1] - a[1] * b[0],
-  ];
+  return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
 }
 
+/** Euclidean magnitude of a vector. */
 function magnitude(v: Vec3): number {
   return Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
 }
 
+/** Normalize a vector to unit length. Returns zero vector if magnitude is negligible. */
 function normalize(v: Vec3): Vec3 {
   const m = magnitude(v);
   if (m < 1e-10) return [0, 0, 0];
@@ -101,20 +132,16 @@ function normalize(v: Vec3): Vec3 {
  * Rotate a direction vector in the local orthonormal basis.
  *
  * Spherical parameterization relative to the surface normal (zAxis):
+ * ```
  *   shaftDir = sin(alpha) * cos(beta) * xAxis
  *            + sin(alpha) * sin(beta) * yAxis
  *            + cos(alpha) * zAxis
+ * ```
  *
- * alpha = 0  => shaft points along zAxis (straight into the eyeball)
- * alpha > 0  => tilted away from normal, beta controls the azimuth direction
+ * - `alpha = 0` => shaft points along zAxis (straight into the eyeball)
+ * - `alpha > 0` => tilted away from normal, beta controls the azimuth direction
  */
-function rotateDirection(
-  zAxis: Vec3,
-  xAxis: Vec3,
-  yAxis: Vec3,
-  alpha: number,
-  beta: number
-): Vec3 {
+function rotateDirection(zAxis: Vec3, xAxis: Vec3, yAxis: Vec3, alpha: number, beta: number): Vec3 {
   const cosAlpha = Math.cos(alpha);
   const sinAlpha = Math.sin(alpha);
   const cosBeta = Math.cos(beta);
@@ -127,11 +154,17 @@ function rotateDirection(
   ];
 }
 
+/**
+ * Build a 4x4 column-major transform matrix from the needle's local coordinate system.
+ *
+ * The Z axis is the shaft direction, X and Y are computed via Gram-Schmidt
+ * orthogonalization to maintain an orthonormal basis.
+ */
 function buildNeedleTransform(
   rcmPoint: Vec3,
   shaftDir: Vec3,
   fallbackX: Vec3,
-  fallbackY: Vec3,
+  fallbackY: Vec3
 ): Float64Array {
   const needleZ = normalize(shaftDir);
 

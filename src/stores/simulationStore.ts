@@ -36,6 +36,7 @@ export interface SimulationState {
   setPhase: (phase: SurgicalPhase) => void;
   setIsDraggingNeedle: (dragging: boolean) => void;
   addTrailPoint: (point: Vec3, tiltAlpha: number, tiltBeta: number, insertionDepth: number) => void;
+  importTrailData: (data: TrailPoint[]) => void;
   clearTrails: () => void;
   togglePlayback: () => void;
   setPlaybackSpeed: (speed: number) => void;
@@ -45,7 +46,9 @@ export interface SimulationState {
   getNeedlePose: () => NeedlePose | null;
 }
 
-function getRCMConfig(state: Pick<SimulationState, 'rcmPoint' | 'surfaceNormal'>): RCMConfig | null {
+function getRCMConfig(
+  state: Pick<SimulationState, 'rcmPoint' | 'surfaceNormal'>
+): RCMConfig | null {
   if (!state.rcmPoint || !state.surfaceNormal) return null;
   return {
     rcmPoint: state.rcmPoint,
@@ -69,8 +72,9 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
   playbackSpeed: 1,
   playbackIndex: 0,
 
-  setRCMPoint: (rcmPoint, surfaceNormal) =>
-    { set({ rcmPoint, surfaceNormal, phase: Phase.CONTACT }); },
+  setRCMPoint: (rcmPoint, surfaceNormal) => {
+    set({ rcmPoint, surfaceNormal, phase: Phase.CONTACT });
+  },
 
   setTiltAngles: (tiltAlpha, tiltBeta) => {
     const clampedAlpha = Math.max(-MAX_TILT_ANGLE, Math.min(MAX_TILT_ANGLE, tiltAlpha));
@@ -93,11 +97,15 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
     set({ insertionDepth: clamped, phase: newPhase });
   },
 
-  setPhase: (phase) => { set({ phase }); },
-  setIsDraggingNeedle: (dragging: boolean) => { set({ isDraggingNeedle: dragging }); },
+  setPhase: (phase) => {
+    set({ phase });
+  },
+  setIsDraggingNeedle: (dragging: boolean) => {
+    set({ isDraggingNeedle: dragging });
+  },
 
-  addTrailPoint: (tipPosition, tiltAlpha, tiltBeta, insertionDepth) =>
-    { set((state) => {
+  addTrailPoint: (tipPosition, tiltAlpha, tiltBeta, insertionDepth) => {
+    set((state) => {
       const point: TrailPoint = { tipPosition, tiltAlpha, tiltBeta, insertionDepth };
       const newData = [...state.trailData, point];
       const newPositions = [...state.trailPoints, tipPosition];
@@ -106,9 +114,22 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
         newPositions.splice(0, newPositions.length - MAX_TRAIL_POINTS);
       }
       return { trailData: newData, trailPoints: newPositions };
-    }); },
+    });
+  },
 
-  clearTrails: () => { set({ trailPoints: [], trailData: [] }); },
+  clearTrails: () => {
+    set({ trailPoints: [], trailData: [] });
+  },
+
+  importTrailData: (data: TrailPoint[]) => {
+    const sliced = data.slice(0, MAX_TRAIL_POINTS);
+    set({
+      trailData: sliced,
+      trailPoints: sliced.map((d) => d.tipPosition),
+      playbackIndex: 0,
+      isPlaying: false,
+    });
+  },
 
   togglePlayback: () => {
     const { isPlaying } = get();
@@ -119,9 +140,13 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
     }
   },
 
-  setPlaybackSpeed: (speed) => { set({ playbackSpeed: speed }); },
+  setPlaybackSpeed: (speed) => {
+    set({ playbackSpeed: speed });
+  },
 
-  setPlaybackIndex: (index) => { set({ playbackIndex: index }); },
+  setPlaybackIndex: (index) => {
+    set({ playbackIndex: index });
+  },
 
   advancePlayback: () => {
     const { playbackIndex, playbackSpeed, trailData, isPlaying } = get();
@@ -143,8 +168,8 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
     });
   },
 
-  reset: () =>
-    { set({
+  reset: () => {
+    set({
       rcmPoint: null,
       surfaceNormal: null,
       tiltAlpha: 0,
@@ -157,7 +182,8 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
       isPlaying: false,
       playbackSpeed: 1,
       playbackIndex: 0,
-    }); },
+    });
+  },
 
   getNeedlePose: () => {
     const config = getRCMConfig(get());

@@ -10,10 +10,7 @@ export function RCMIndicator() {
   if (!rcmPoint) return null;
 
   return (
-    <mesh
-      ref={meshRef}
-      position={new THREE.Vector3(rcmPoint[0], rcmPoint[1], rcmPoint[2])}
-    >
+    <mesh ref={meshRef} position={new THREE.Vector3(rcmPoint[0], rcmPoint[1], rcmPoint[2])}>
       <sphereGeometry args={[0.3, 16, 16]} />
       <meshStandardMaterial
         color={COLORS.rcmIndicator}

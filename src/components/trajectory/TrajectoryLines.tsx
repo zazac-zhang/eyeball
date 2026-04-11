@@ -10,13 +10,5 @@ export function TrajectoryLines() {
 
   const points = trailPoints.map((p) => new THREE.Vector3(p[0], p[1], p[2]));
 
-  return (
-    <Line
-      points={points}
-      color={COLORS.trajectory}
-      lineWidth={2}
-      transparent
-      opacity={0.8}
-    />
-  );
+  return <Line points={points} color={COLORS.trajectory} lineWidth={2} transparent opacity={0.8} />;
 }

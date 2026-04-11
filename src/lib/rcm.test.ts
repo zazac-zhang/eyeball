@@ -8,12 +8,14 @@ function assertResult(result: ReturnType<typeof computeRCMFromRay>) {
 
 describe('computeRCMFromRay', () => {
   test('finds intersection on front of sphere', () => {
-    const result = assertResult(computeRCMFromRay(
-      [0, 0, 30],    // ray from far away on z-axis
-      [0, 0, -1],    // pointing toward origin
-      [0, 0, 0],     // eyeball center
-      12             // radius
-    ));
+    const result = assertResult(
+      computeRCMFromRay(
+        [0, 0, 30], // ray from far away on z-axis
+        [0, 0, -1], // pointing toward origin
+        [0, 0, 0], // eyeball center
+        12 // radius
+      )
+    );
     // Should hit at z = 12 (front surface)
     expect(result.rcmPoint[2]).toBeCloseTo(12);
     // Surface normal should point outward
@@ -22,8 +24,8 @@ describe('computeRCMFromRay', () => {
 
   test('returns null for ray that misses sphere', () => {
     const result = computeRCMFromRay(
-      [20, 0, 30],   // ray far to the side
-      [0, 0, -1],    // pointing toward origin
+      [20, 0, 30], // ray far to the side
+      [0, 0, -1], // pointing toward origin
       [0, 0, 0],
       12
     );
@@ -31,19 +33,17 @@ describe('computeRCMFromRay', () => {
   });
 
   test('computes correct normal at hit point', () => {
-    const result = assertResult(computeRCMFromRay(
-      [12, 0, 30],   // ray directly at right edge
-      [0, 0, -1],    // pointing toward origin
-      [0, 0, 0],
-      12
-    ));
+    const result = assertResult(
+      computeRCMFromRay(
+        [12, 0, 30], // ray directly at right edge
+        [0, 0, -1], // pointing toward origin
+        [0, 0, 0],
+        12
+      )
+    );
     // Hit point should be on the sphere surface
     const { rcmPoint } = result;
-    const dist = Math.sqrt(
-      rcmPoint[0] ** 2 +
-      rcmPoint[1] ** 2 +
-      rcmPoint[2] ** 2
-    );
+    const dist = Math.sqrt(rcmPoint[0] ** 2 + rcmPoint[1] ** 2 + rcmPoint[2] ** 2);
     expect(dist).toBeCloseTo(12, 5);
   });
 });
@@ -76,9 +76,7 @@ describe('computeNeedlePose', () => {
     const pose0 = computeNeedlePose(config, 0, 0, 1);
     const pose1 = computeNeedlePose(config, Math.PI / 8, 0, 1);
     // Directions should differ
-    expect(
-      Math.abs(pose0.shaftDirection[0] - pose1.shaftDirection[0])
-    ).toBeGreaterThan(0.01);
+    expect(Math.abs(pose0.shaftDirection[0] - pose1.shaftDirection[0])).toBeGreaterThan(0.01);
   });
 
   test('shaft direction is always unit length', () => {
@@ -92,9 +90,7 @@ describe('computeNeedlePose', () => {
     for (const [alpha, beta] of angles) {
       const pose = computeNeedlePose(config, alpha, beta, 3);
       const len = Math.sqrt(
-        pose.shaftDirection[0] ** 2 +
-        pose.shaftDirection[1] ** 2 +
-        pose.shaftDirection[2] ** 2
+        pose.shaftDirection[0] ** 2 + pose.shaftDirection[1] ** 2 + pose.shaftDirection[2] ** 2
       );
       expect(len).toBeCloseTo(1, 5);
     }

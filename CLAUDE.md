@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Package Manager
 
-**Use `pnpm` for all dependency operations.** Do not use `npm` or `yarn`.
+**Use `bun` for all dependency operations.** Do not use `npm` or `yarn`.
 
 ## Commands
 
@@ -82,17 +82,17 @@ src/
 
 ### Interaction
 
-| Input | Action |
-|-------|--------|
-| Left click on eyeball | Place RCM point |
-| Left drag (after RCM placed) | Tilt needle (alpha/beta) |
-| Scroll wheel | Insert/withdraw depth |
-| Right/Middle drag | Orbit camera |
-| R | Reset simulation |
-| C | Clear trails |
-| Arrow Up/Down | Insert/withdraw 0.5mm |
-| Arrow Left/Right | Rotate azimuth |
-| 1-4 | Preset tilt angles (0°/15°/30°/45°) |
+| Input                        | Action                              |
+| ---------------------------- | ----------------------------------- |
+| Left click on eyeball        | Place RCM point                     |
+| Left drag (after RCM placed) | Tilt needle (alpha/beta)            |
+| Scroll wheel                 | Insert/withdraw depth               |
+| Right/Middle drag            | Orbit camera                        |
+| R                            | Reset simulation                    |
+| C                            | Clear trails                        |
+| Arrow Up/Down                | Insert/withdraw 0.5mm               |
+| Arrow Left/Right             | Rotate azimuth                      |
+| 1-4                          | Preset tilt angles (0°/15°/30°/45°) |
 
 ### Key Implementation Details
 

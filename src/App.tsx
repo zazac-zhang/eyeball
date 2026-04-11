@@ -8,10 +8,7 @@ function App() {
   return (
     <div className="relative h-screen w-screen overflow-hidden">
       <div className="absolute inset-0">
-        <Canvas
-          camera={{ position: [0, 10, 30], fov: 45 }}
-          dpr={[1, 2]}
-        >
+        <Canvas camera={{ position: [0, 10, 30], fov: 45 }} dpr={[1, 2]}>
           <color attach="background" args={['#0a0a1a']} />
           <Scene />
         </Canvas>

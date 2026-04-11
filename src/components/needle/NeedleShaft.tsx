@@ -19,11 +19,7 @@ export function NeedleShaft({ length, offset = 0 }: NeedleShaftProps) {
 
   return (
     <mesh geometry={geometry}>
-      <meshStandardMaterial
-        color={COLORS.needleShaft}
-        metalness={0.8}
-        roughness={0.2}
-      />
+      <meshStandardMaterial color={COLORS.needleShaft} metalness={0.8} roughness={0.2} />
     </mesh>
   );
 }

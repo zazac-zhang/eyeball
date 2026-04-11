@@ -1,6 +1,11 @@
 import { expect, test } from 'vitest';
 import * as THREE from 'three';
-import { makeTransform, transformPoint, makeRotationFromBasis, multiplyTransforms } from './transforms';
+import {
+  makeTransform,
+  transformPoint,
+  makeRotationFromBasis,
+  multiplyTransforms,
+} from './transforms';
 
 test('transformPoint applies translation correctly', () => {
   const rot = new THREE.Matrix3().identity();
@@ -26,10 +31,18 @@ test('makeRotationFromBasis creates valid rotation matrix', () => {
   const zAxis: [number, number, number] = [0, 0, 1];
   const m = makeRotationFromBasis(xAxis, yAxis, zAxis);
   // Should be identity for the rotation part
-  expect(m[0]).toBe(1); expect(m[1]).toBe(0); expect(m[2]).toBe(0);
-  expect(m[4]).toBe(0); expect(m[5]).toBe(1); expect(m[6]).toBe(0);
-  expect(m[8]).toBe(0); expect(m[9]).toBe(0); expect(m[10]).toBe(1);
-  expect(m[12]).toBe(0); expect(m[13]).toBe(0); expect(m[14]).toBe(0);
+  expect(m[0]).toBe(1);
+  expect(m[1]).toBe(0);
+  expect(m[2]).toBe(0);
+  expect(m[4]).toBe(0);
+  expect(m[5]).toBe(1);
+  expect(m[6]).toBe(0);
+  expect(m[8]).toBe(0);
+  expect(m[9]).toBe(0);
+  expect(m[10]).toBe(1);
+  expect(m[12]).toBe(0);
+  expect(m[13]).toBe(0);
+  expect(m[14]).toBe(0);
   expect(m[15]).toBe(1);
 });
 
