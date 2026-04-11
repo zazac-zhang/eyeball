@@ -1,6 +1,4 @@
 export const EYEBALL_RADIUS = 12; // mm
-export const CORNEA_RADIUS = 12;
-export const RETINA_RADIUS = 11.5;
 export const MAX_INSERTION_DEPTH = 18; // mm
 export const MAX_TILT_ANGLE = Math.PI / 4; // 45 degrees
 

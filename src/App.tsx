@@ -6,8 +6,8 @@ import './index.css';
 
 function App() {
   return (
-    <div className="app">
-      <div className="canvas-container">
+    <div className="relative h-screen w-screen overflow-hidden">
+      <div className="absolute inset-0">
         <Canvas
           camera={{ position: [0, 10, 30], fov: 45 }}
           dpr={[1, 2]}
@@ -16,11 +16,11 @@ function App() {
           <Scene />
         </Canvas>
       </div>
-      <div className="hud-overlay">
-        <div className="hud-top">
+      <div className="pointer-events-none absolute inset-0 flex flex-col justify-between p-4">
+        <div className="flex justify-start">
           <KinematicsPanel />
         </div>
-        <div className="hud-bottom">
+        <div className="flex justify-end">
           <ControlPanel />
         </div>
       </div>

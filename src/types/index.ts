@@ -19,6 +19,14 @@ export interface NeedlePose {
   needleTransform: Float64Array;
 }
 
+/** Full state snapshot at a single moment during simulation */
+export interface TrailPoint {
+  tipPosition: Vec3;
+  tiltAlpha: number;
+  tiltBeta: number;
+  insertionDepth: number;
+}
+
 export interface SimulationState {
   rcmPoint: Vec3 | null;
   surfaceNormal: Vec3 | null;
@@ -28,6 +36,7 @@ export interface SimulationState {
   phase: SurgicalPhase;
   isPlaying: boolean;
   playbackSpeed: number;
+  playbackIndex: number;
+  isDraggingNeedle: boolean;
   trailPoints: Vec3[];
-  rcmTrailPoints: Vec3[];
 }

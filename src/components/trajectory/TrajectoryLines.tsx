@@ -1,11 +1,10 @@
-import { Line } from '@react-three/drei';
 import * as THREE from 'three';
+import { Line } from '@react-three/drei';
 import { useSimulationStore } from '../../stores/simulationStore';
 import { COLORS } from '../../constants';
 
 export function TrajectoryLines() {
   const trailPoints = useSimulationStore((s) => s.trailPoints);
-  const isPlaying = useSimulationStore((s) => s.isPlaying);
 
   if (trailPoints.length < 2) return null;
 
@@ -17,7 +16,7 @@ export function TrajectoryLines() {
       color={COLORS.trajectory}
       lineWidth={2}
       transparent
-      opacity={isPlaying ? 0.4 : 0.8}
+      opacity={0.8}
     />
   );
 }

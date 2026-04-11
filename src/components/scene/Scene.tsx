@@ -6,9 +6,11 @@ import { RCMIndicator } from '../trajectory/RCMIndicator';
 import { Lighting } from './Lighting';
 import { ScleraClickHandler } from './ScleraClickHandler';
 import { useTrajectoryRecorder } from '../../hooks/useTrajectory';
+import { useSimulationStore } from '../../stores/simulationStore';
 
 export function Scene() {
   useTrajectoryRecorder();
+  const isDraggingNeedle = useSimulationStore((s) => s.isDraggingNeedle);
 
   return (
     <>
@@ -19,6 +21,7 @@ export function Scene() {
       <RCMIndicator />
       <ScleraClickHandler />
       <OrbitControls
+        enabled={!isDraggingNeedle}
         enablePan={false}
         minDistance={15}
         maxDistance={60}

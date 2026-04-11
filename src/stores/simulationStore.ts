@@ -1,10 +1,9 @@
 import { create } from 'zustand';
-import type { Vec3, NeedlePose, SurgicalPhase } from '../types';
+import type { Vec3, NeedlePose, SurgicalPhase, TrailPoint } from '../types';
 import { SurgicalPhase as Phase } from '../types';
 import { computeNeedlePose, type RCMConfig } from '../lib/rcm';
 import { MAX_INSERTION_DEPTH, MAX_TILT_ANGLE } from '../constants';
 
-// Maximum number of trail points to keep in memory
 const MAX_TRAIL_POINTS = 5000;
 
 export interface SimulationState {
@@ -19,24 +18,29 @@ export interface SimulationState {
 
   // Workflow
   phase: SurgicalPhase;
-  isPlaying: boolean;
-  playbackSpeed: number;
-  playbackIndex: number;
+  isDraggingNeedle: boolean;
 
   // Trajectory
   trailPoints: Vec3[];
+  trailData: TrailPoint[];
+
+  // Playback
+  isPlaying: boolean;
+  playbackSpeed: number;
+  playbackIndex: number;
 
   // Actions
   setRCMPoint: (rcmPoint: Vec3, surfaceNormal: Vec3) => void;
   setTiltAngles: (alpha: number, beta: number) => void;
   setInsertionDepth: (depth: number) => void;
   setPhase: (phase: SurgicalPhase) => void;
-  addTrailPoint: (point: Vec3) => void;
+  setIsDraggingNeedle: (dragging: boolean) => void;
+  addTrailPoint: (point: Vec3, tiltAlpha: number, tiltBeta: number, insertionDepth: number) => void;
   clearTrails: () => void;
   togglePlayback: () => void;
   setPlaybackSpeed: (speed: number) => void;
-  setPlaybackPose: (alpha: number, beta: number, depth: number) => void;
-  advancePlayback: () => boolean;
+  setPlaybackIndex: (index: number) => void;
+  advancePlayback: () => void;
   reset: () => void;
   getNeedlePose: () => NeedlePose | null;
 }
@@ -58,18 +62,19 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
   tiltBeta: 0,
   insertionDepth: 0,
   phase: Phase.IDLE,
+  isDraggingNeedle: false,
+  trailPoints: [],
+  trailData: [],
   isPlaying: false,
   playbackSpeed: 1,
   playbackIndex: 0,
-  trailPoints: [],
 
   setRCMPoint: (rcmPoint, surfaceNormal) =>
-    set({ rcmPoint, surfaceNormal, phase: Phase.CONTACT }),
+    { set({ rcmPoint, surfaceNormal, phase: Phase.CONTACT }); },
 
   setTiltAngles: (tiltAlpha, tiltBeta) => {
     const clampedAlpha = Math.max(-MAX_TILT_ANGLE, Math.min(MAX_TILT_ANGLE, tiltAlpha));
     const { phase } = get();
-    // Transition to INSERTING when user starts manipulating after CONTACT
     const newPhase = phase === Phase.CONTACT ? Phase.INSERTING : phase;
     set({ tiltAlpha: clampedAlpha, tiltBeta, phase: newPhase });
   },
@@ -81,97 +86,78 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
     if (phase === Phase.CONTACT) {
       newPhase = Phase.INSERTING;
     } else if (clamped <= 0 && phase === Phase.INSERTING) {
+      newPhase = Phase.WITHDRAWING;
+    } else if (clamped <= 0 && phase === Phase.WITHDRAWING) {
       newPhase = Phase.COMPLETE;
     }
     set({ insertionDepth: clamped, phase: newPhase });
   },
 
-  setPhase: (phase) => set({ phase }),
+  setPhase: (phase) => { set({ phase }); },
+  setIsDraggingNeedle: (dragging: boolean) => { set({ isDraggingNeedle: dragging }); },
 
-  addTrailPoint: (point) =>
-    set((state) => {
-      const newPoints = [...state.trailPoints, point];
-      // Cap the trail points to prevent unbounded growth
-      if (newPoints.length > MAX_TRAIL_POINTS) {
-        newPoints.splice(0, newPoints.length - MAX_TRAIL_POINTS);
+  addTrailPoint: (tipPosition, tiltAlpha, tiltBeta, insertionDepth) =>
+    { set((state) => {
+      const point: TrailPoint = { tipPosition, tiltAlpha, tiltBeta, insertionDepth };
+      const newData = [...state.trailData, point];
+      const newPositions = [...state.trailPoints, tipPosition];
+      if (newData.length > MAX_TRAIL_POINTS) {
+        newData.splice(0, newData.length - MAX_TRAIL_POINTS);
+        newPositions.splice(0, newPositions.length - MAX_TRAIL_POINTS);
       }
-      return { trailPoints: newPoints };
-    }),
+      return { trailData: newData, trailPoints: newPositions };
+    }); },
 
-  clearTrails: () => set({ trailPoints: [] }),
+  clearTrails: () => { set({ trailPoints: [], trailData: [] }); },
 
   togglePlayback: () => {
-    const { trailPoints, isPlaying } = get();
-    if (!isPlaying && trailPoints.length < 2) return; // Nothing to play
+    const { isPlaying } = get();
     if (!isPlaying) {
       set({ isPlaying: true, playbackIndex: 0 });
     } else {
-      set({ isPlaying: false });
+      set({ isPlaying: false, playbackIndex: 0 });
     }
   },
 
-  setPlaybackSpeed: (playbackSpeed) => set({ playbackSpeed }),
+  setPlaybackSpeed: (speed) => { set({ playbackSpeed: speed }); },
 
-  setPlaybackPose: (tiltAlpha, tiltBeta, insertionDepth) =>
-    set({ tiltAlpha, tiltBeta, insertionDepth }),
+  setPlaybackIndex: (index) => { set({ playbackIndex: index }); },
 
-  advancePlayback: (): boolean => {
-    const { trailPoints, playbackIndex, playbackSpeed } = get();
-    if (playbackIndex >= trailPoints.length - 1) {
+  advancePlayback: () => {
+    const { playbackIndex, playbackSpeed, trailData, isPlaying } = get();
+    if (!isPlaying || trailData.length === 0) return;
+
+    const nextIndex = playbackIndex + playbackSpeed;
+    if (nextIndex >= trailData.length - 1) {
       set({ isPlaying: false, playbackIndex: 0 });
-      return false;
+      return;
     }
 
-    // During playback, step through recorded poses
-    // We interpolate between consecutive trail points
-    const stepsPerPoint = Math.max(1, Math.round(4 / playbackSpeed));
-    const currentStep = playbackIndex % stepsPerPoint;
-    const pointIndex = Math.floor(playbackIndex / stepsPerPoint);
-
-    if (pointIndex >= trailPoints.length - 2) {
-      set({ isPlaying: false, playbackIndex: 0 });
-      return false;
-    }
-
-    const from = trailPoints[pointIndex];
-    const to = trailPoints[pointIndex + 1];
-    const t = currentStep / stepsPerPoint;
-
-    const pose = [
-      from[0] + (to[0] - from[0]) * t,
-      from[1] + (to[1] - from[1]) * t,
-      from[2] + (to[2] - from[2]) * t,
-    ] as Vec3;
-
-    // We need to reconstruct alpha/beta/depth from the tip position
-    // For playback, directly set the pose from trail data
+    const idx = Math.floor(nextIndex);
+    const currentPoint = trailData[idx];
     set({
-      tiltAlpha: get().tiltAlpha, // Keep current angles during playback
-      tiltBeta: get().tiltBeta,
-      insertionDepth: Math.sqrt(
-        (pose[0] - (get().rcmPoint?.[0] ?? 0)) ** 2 +
-        (pose[1] - (get().rcmPoint?.[1] ?? 0)) ** 2 +
-        (pose[2] - (get().rcmPoint?.[2] ?? 0)) ** 2
-      ),
-      playbackIndex: playbackIndex + 1,
+      tiltAlpha: currentPoint.tiltAlpha,
+      tiltBeta: currentPoint.tiltBeta,
+      insertionDepth: currentPoint.insertionDepth,
+      playbackIndex: nextIndex,
     });
-
-    return true;
   },
 
   reset: () =>
-    set({
+    { set({
       rcmPoint: null,
       surfaceNormal: null,
       tiltAlpha: 0,
       tiltBeta: 0,
       insertionDepth: 0,
       phase: Phase.IDLE,
+      isDraggingNeedle: false,
+      trailPoints: [],
+      trailData: [],
       isPlaying: false,
       playbackSpeed: 1,
       playbackIndex: 0,
-      trailPoints: [],
-    }),
+    }); },
 
   getNeedlePose: () => {
     const config = getRCMConfig(get());

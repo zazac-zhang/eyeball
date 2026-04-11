@@ -1,64 +1,15 @@
-import { useRef, useCallback } from 'react';
-import { type ThreeEvent } from '@react-three/fiber';
-import { useSimulationStore } from '../../stores/simulationStore';
-import { computeRCMFromRay } from '../../lib/rcm';
-import { EYEBALL_RADIUS, MAX_INSERTION_DEPTH, MAX_TILT_ANGLE } from '../../constants';
-import type { Vec3 } from '../../types';
+import { EYEBALL_RADIUS } from '../../constants';
+import { useMouseControl } from '../../hooks/useMouseControl';
+import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 
+/**
+ * Invisible sphere that captures mouse/pointer interaction on the eyeball
+ * and registers global keyboard shortcuts.
+ */
 export function ScleraClickHandler() {
-  const isDragging = useRef(false);
-  const lastMouse = useRef({ x: 0, y: 0 });
-
-  const setRCMPoint = useSimulationStore((s) => s.setRCMPoint);
-  const setTiltAngles = useSimulationStore((s) => s.setTiltAngles);
-  const setInsertionDepth = useSimulationStore((s) => s.setInsertionDepth);
-  const tiltAlpha = useSimulationStore((s) => s.tiltAlpha);
-  const tiltBeta = useSimulationStore((s) => s.tiltBeta);
-  const rcmPoint = useSimulationStore((s) => s.rcmPoint);
-  const rcmPointSet = !!rcmPoint;
-
-  const handleClick = useCallback((e: ThreeEvent<MouseEvent>) => {
-    if (rcmPointSet) return;
-
-    const rayOrigin: Vec3 = [e.ray.origin.x, e.ray.origin.y, e.ray.origin.z];
-    const rayDir: Vec3 = [e.ray.direction.x, e.ray.direction.y, e.ray.direction.z];
-    const result = computeRCMFromRay(rayOrigin, rayDir, [0, 0, 0], EYEBALL_RADIUS);
-    if (!result) return;
-
-    setRCMPoint(result.rcmPoint, result.surfaceNormal);
-  }, [rcmPointSet, setRCMPoint]);
-
-  const handlePointerDown = useCallback((e: ThreeEvent<PointerEvent>) => {
-    if (!rcmPointSet) return;
-    isDragging.current = true;
-    lastMouse.current = { x: e.clientX, y: e.clientY };
-  }, [rcmPointSet]);
-
-  const handlePointerMove = useCallback((e: ThreeEvent<PointerEvent>) => {
-    if (!isDragging.current || !rcmPointSet) return;
-    const dx = e.clientX - lastMouse.current.x;
-    const dy = e.clientY - lastMouse.current.y;
-    lastMouse.current = { x: e.clientX, y: e.clientY };
-
-    const sensitivity = 0.005;
-    const newBeta = tiltBeta + dx * sensitivity;
-    const newAlpha = Math.max(
-      -MAX_TILT_ANGLE,
-      Math.min(MAX_TILT_ANGLE, tiltAlpha + dy * sensitivity)
-    );
-    setTiltAngles(newAlpha, newBeta);
-  }, [rcmPointSet, tiltAlpha, tiltBeta, setTiltAngles]);
-
-  const handlePointerUp = useCallback(() => {
-    isDragging.current = false;
-  }, []);
-
-  const handleWheel = useCallback((e: ThreeEvent<WheelEvent>) => {
-    if (!rcmPointSet) return;
-    const delta = e.deltaY > 0 ? -0.5 : 0.5;
-    const current = useSimulationStore.getState().insertionDepth;
-    setInsertionDepth(Math.max(0, Math.min(current + delta, MAX_INSERTION_DEPTH)));
-  }, [rcmPointSet, setInsertionDepth]);
+  const { handleClick, handlePointerDown, handlePointerMove, handlePointerUp, handleWheel } =
+    useMouseControl();
+  useKeyboardShortcuts();
 
   return (
     <mesh
@@ -70,7 +21,7 @@ export function ScleraClickHandler() {
       onPointerLeave={handlePointerUp}
       onWheel={handleWheel}
     >
-      <sphereGeometry args={[EYEBALL_RADIUS + 1, 32, 32]} />
+      <sphereGeometry args={[EYEBALL_RADIUS, 32, 32]} />
       <meshBasicMaterial transparent opacity={0} />
     </mesh>
   );

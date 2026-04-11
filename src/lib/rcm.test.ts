@@ -1,19 +1,23 @@
 import { expect, test, describe } from 'vitest';
 import { computeNeedlePose, computeRCMFromRay } from './rcm';
 
+function assertResult(result: ReturnType<typeof computeRCMFromRay>) {
+  if (!result) throw new Error('Expected non-null result');
+  return result;
+}
+
 describe('computeRCMFromRay', () => {
   test('finds intersection on front of sphere', () => {
-    const result = computeRCMFromRay(
+    const result = assertResult(computeRCMFromRay(
       [0, 0, 30],    // ray from far away on z-axis
       [0, 0, -1],    // pointing toward origin
       [0, 0, 0],     // eyeball center
       12             // radius
-    );
-    expect(result).not.toBeNull();
+    ));
     // Should hit at z = 12 (front surface)
-    expect(result!.rcmPoint[2]).toBeCloseTo(12);
+    expect(result.rcmPoint[2]).toBeCloseTo(12);
     // Surface normal should point outward
-    expect(result!.surfaceNormal[2]).toBeCloseTo(1);
+    expect(result.surfaceNormal[2]).toBeCloseTo(1);
   });
 
   test('returns null for ray that misses sphere', () => {
@@ -27,18 +31,18 @@ describe('computeRCMFromRay', () => {
   });
 
   test('computes correct normal at hit point', () => {
-    const result = computeRCMFromRay(
+    const result = assertResult(computeRCMFromRay(
       [12, 0, 30],   // ray directly at right edge
       [0, 0, -1],    // pointing toward origin
       [0, 0, 0],
       12
-    );
-    expect(result).not.toBeNull();
+    ));
     // Hit point should be on the sphere surface
+    const { rcmPoint } = result;
     const dist = Math.sqrt(
-      result!.rcmPoint[0] ** 2 +
-      result!.rcmPoint[1] ** 2 +
-      result!.rcmPoint[2] ** 2
+      rcmPoint[0] ** 2 +
+      rcmPoint[1] ** 2 +
+      rcmPoint[2] ** 2
     );
     expect(dist).toBeCloseTo(12, 5);
   });
