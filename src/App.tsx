@@ -2,6 +2,7 @@ import { Canvas } from '@react-three/fiber';
 import { Scene } from './components/scene/Scene';
 import { KinematicsPanel } from './components/hud/KinematicsPanel';
 import { ControlPanel } from './components/hud/ControlPanel';
+import { ModePanel } from './components/hud/ModePanel';
 import './index.css';
 
 function App() {
@@ -14,8 +15,9 @@ function App() {
         </Canvas>
       </div>
       <div className="pointer-events-none absolute inset-0 flex flex-col justify-between p-4">
-        <div className="flex justify-start">
+        <div className="flex items-start justify-between">
           <KinematicsPanel />
+          <ModePanel />
         </div>
         <div className="flex justify-end">
           <ControlPanel />

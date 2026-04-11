@@ -12,7 +12,7 @@ import { useSimulationStore } from '../../stores/simulationStore';
 
 export function Scene() {
   useTrajectoryRecorder();
-  const isDraggingNeedle = useSimulationStore((s) => s.isDraggingNeedle);
+  const mode = useSimulationStore((s) => s.mode);
 
   return (
     <>
@@ -25,7 +25,7 @@ export function Scene() {
       <RCMIndicator />
       <ScleraClickHandler />
       <OrbitControls
-        enabled={!isDraggingNeedle}
+        enabled={mode !== 'EDIT'}
         enablePan={false}
         minDistance={15}
         maxDistance={60}

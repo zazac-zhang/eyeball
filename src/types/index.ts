@@ -1,5 +1,7 @@
 export type Vec3 = [number, number, number];
 
+export type SimulationMode = 'VIEW' | 'PLACE' | 'EDIT' | 'REPLAY';
+
 export const SurgicalPhase = {
   IDLE: 'IDLE',
   CONTACT: 'CONTACT',
@@ -28,6 +30,7 @@ export interface TrailPoint {
 }
 
 export interface SimulationState {
+  mode: SimulationMode;
   rcmPoint: Vec3 | null;
   surfaceNormal: Vec3 | null;
   tiltAlpha: number;
@@ -37,6 +40,5 @@ export interface SimulationState {
   isPlaying: boolean;
   playbackSpeed: number;
   playbackIndex: number;
-  isDraggingNeedle: boolean;
   trailPoints: Vec3[];
 }

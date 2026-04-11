@@ -18,12 +18,17 @@ const buttonBase =
 
 export function ControlPanel() {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const mode = useSimulationStore((s) => s.mode);
   const clearTrails = useSimulationStore((s) => s.clearTrails);
   const reset = useSimulationStore((s) => s.reset);
+  const setMode = useSimulationStore((s) => s.setMode);
   const togglePlayback = useSimulationStore((s) => s.togglePlayback);
   const importTrailData = useSimulationStore((s) => s.importTrailData);
   const trailData = useSimulationStore((s) => s.trailData);
   const isPlaying = useSimulationStore((s) => s.isPlaying);
+  const playbackIndex = useSimulationStore((s) => s.playbackIndex);
+  const playbackSpeed = useSimulationStore((s) => s.playbackSpeed);
+  const setPlaybackSpeed = useSimulationStore((s) => s.setPlaybackSpeed);
   const insertionDepth = useSimulationStore((s) => s.insertionDepth);
   const setInsertionDepth = useSimulationStore((s) => s.setInsertionDepth);
   const tiltAlpha = useSimulationStore((s) => s.tiltAlpha);
@@ -65,6 +70,9 @@ export function ControlPanel() {
     }, 'image/png');
   }, []);
 
+  const isEditMode = mode === 'EDIT';
+  const isReplayMode = mode === 'REPLAY';
+
   return (
     <div className="pointer-events-auto min-w-[240px] rounded-lg border border-blue-500/30 bg-gray-950/85 p-4 text-blue-100 backdrop-blur">
       <h3 className="mb-3 border-b border-blue-500/20 pb-2 text-sm font-semibold tracking-wider text-blue-400 uppercase">
@@ -81,87 +89,157 @@ export function ControlPanel() {
         </span>
       </div>
 
-      {/* Manual tilt controls */}
-      <div className="mb-3">
-        <label className="mb-1.5 block text-sm text-blue-100">
-          Tilt Alpha (elevation): {(tiltAlpha * (180 / Math.PI)).toFixed(1)}deg
-        </label>
-        <input
-          type="range"
-          min={-MAX_TILT_ANGLE}
-          max={MAX_TILT_ANGLE}
-          step={0.01}
-          value={tiltAlpha}
-          className={sliderClass}
-          onChange={(e) => {
-            setTiltAngles(parseFloat(e.target.value), tiltBeta);
-          }}
-          disabled={!rcmPoint}
-        />
-      </div>
-
-      <div className="mb-3">
-        <label className="mb-1.5 block text-sm text-blue-100">
-          Tilt Beta (azimuth): {(tiltBeta * (180 / Math.PI)).toFixed(1)}deg
-        </label>
-        <input
-          type="range"
-          min={-Math.PI}
-          max={Math.PI}
-          step={0.01}
-          value={tiltBeta}
-          className={sliderClass}
-          onChange={(e) => {
-            setTiltAngles(tiltAlpha, parseFloat(e.target.value));
-          }}
-          disabled={!rcmPoint}
-        />
-      </div>
-
-      {/* Insertion depth control */}
-      <div className="mb-3">
-        <label className="mb-1.5 block text-sm text-blue-100">
-          Insertion Depth: {insertionDepth.toFixed(1)} mm
-        </label>
-        <input
-          type="range"
-          min={0}
-          max={MAX_INSERTION_DEPTH}
-          step={0.1}
-          value={insertionDepth}
-          className={sliderClass}
-          onChange={(e) => {
-            setInsertionDepth(parseFloat(e.target.value));
-          }}
-          disabled={!rcmPoint}
-        />
-      </div>
-
-      {/* Preset angles */}
-      <div className="mb-3">
-        <label className="mb-1.5 block text-sm text-blue-100">Preset Angles</label>
-        <div className="flex flex-wrap gap-2">
-          {[
-            [0, 0, '0deg'],
-            [Math.PI / 12, 0, '15deg'],
-            [Math.PI / 6, 0, '30deg'],
-            [MAX_TILT_ANGLE, 0, '45deg'],
-          ].map(([a, b, label]) => (
-            <button
-              key={label}
-              onClick={() => {
-                setTiltAngles(a as number, b as number);
-              }}
-              disabled={!rcmPoint}
-              className={`${buttonBase} min-w-[50px]`}
-            >
-              {label}
-            </button>
-          ))}
+      {/* Mode-specific content */}
+      {!isEditMode && !isReplayMode && (
+        <div className="mb-3 rounded border border-blue-500/15 bg-blue-500/5 px-3 py-2 text-xs text-blue-300/70">
+          {mode === 'VIEW' && (
+            <p>
+              Free observation mode. Switch to{' '}
+              <button
+                className="text-green-400 underline hover:text-green-300"
+                onClick={() => {
+                  if (rcmPoint) {
+                    setMode('EDIT');
+                  } else {
+                    setMode('PLACE');
+                  }
+                }}
+              >
+                {rcmPoint ? 'Edit' : 'Place'}
+              </button>{' '}
+              to interact with the needle.
+            </p>
+          )}
+          {mode === 'PLACE' && !rcmPoint && (
+            <p>Click on the eyeball surface to place the RCM point.</p>
+          )}
         </div>
-      </div>
+      )}
 
-      {/* Data export */}
+      {/* EDIT mode: full controls */}
+      {isEditMode && (
+        <>
+          {/* Manual tilt controls */}
+          <div className="mb-3">
+            <label className="mb-1.5 block text-sm text-blue-100">
+              Tilt Alpha (elevation): {(tiltAlpha * (180 / Math.PI)).toFixed(1)}deg
+            </label>
+            <input
+              type="range"
+              min={-MAX_TILT_ANGLE}
+              max={MAX_TILT_ANGLE}
+              step={0.01}
+              value={tiltAlpha}
+              className={sliderClass}
+              onChange={(e) => {
+                setTiltAngles(parseFloat(e.target.value), tiltBeta);
+              }}
+            />
+          </div>
+
+          <div className="mb-3">
+            <label className="mb-1.5 block text-sm text-blue-100">
+              Tilt Beta (azimuth): {(tiltBeta * (180 / Math.PI)).toFixed(1)}deg
+            </label>
+            <input
+              type="range"
+              min={-Math.PI}
+              max={Math.PI}
+              step={0.01}
+              value={tiltBeta}
+              className={sliderClass}
+              onChange={(e) => {
+                setTiltAngles(tiltAlpha, parseFloat(e.target.value));
+              }}
+            />
+          </div>
+
+          {/* Insertion depth control */}
+          <div className="mb-3">
+            <label className="mb-1.5 block text-sm text-blue-100">
+              Insertion Depth: {insertionDepth.toFixed(1)} mm
+            </label>
+            <input
+              type="range"
+              min={0}
+              max={MAX_INSERTION_DEPTH}
+              step={0.1}
+              value={insertionDepth}
+              className={sliderClass}
+              onChange={(e) => {
+                setInsertionDepth(parseFloat(e.target.value));
+              }}
+            />
+          </div>
+
+          {/* Preset angles */}
+          <div className="mb-3">
+            <label className="mb-1.5 block text-sm text-blue-100">Preset Angles</label>
+            <div className="flex flex-wrap gap-2">
+              {[
+                [0, 0, '0deg'],
+                [Math.PI / 12, 0, '15deg'],
+                [Math.PI / 6, 0, '30deg'],
+                [MAX_TILT_ANGLE, 0, '45deg'],
+              ].map(([a, b, label]) => (
+                <button
+                  key={label}
+                  onClick={() => {
+                    setTiltAngles(a as number, b as number);
+                  }}
+                  className={`${buttonBase} min-w-[50px]`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* REPLAY mode: playback controls */}
+      {isReplayMode && (
+        <>
+          <div className="mb-3">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-xs text-blue-300/70">Progress</span>
+              <span className="text-xs text-blue-100">
+                {Math.floor(playbackIndex)} / {trailData.length - 1}
+              </span>
+            </div>
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-blue-500/20">
+              <div
+                className="h-full rounded-full bg-purple-500 transition-[width] duration-100"
+                style={{
+                  width:
+                    trailData.length > 0
+                      ? `${((playbackIndex / (trailData.length - 1)) * 100).toFixed(1)}%`
+                      : '0%',
+                }}
+              />
+            </div>
+          </div>
+
+          <div className="mb-3">
+            <label className="mb-1.5 block text-sm text-blue-100">
+              Speed: {playbackSpeed.toFixed(1)}x
+            </label>
+            <input
+              type="range"
+              min={0.5}
+              max={5}
+              step={0.5}
+              value={playbackSpeed}
+              className="w-full accent-purple-500 [&::-webkit-slider-thumb]:cursor-pointer"
+              onChange={(e) => {
+                setPlaybackSpeed(parseFloat(e.target.value));
+              }}
+            />
+          </div>
+        </>
+      )}
+
+      {/* Data export (visible in all modes) */}
       <div className="mb-3">
         <label className="mb-1.5 block text-sm text-blue-100">Data</label>
         <div className="flex flex-wrap gap-2">
@@ -192,11 +270,21 @@ export function ControlPanel() {
       {/* Action buttons */}
       <div className="mt-2 flex gap-2">
         <button
-          onClick={togglePlayback}
+          onClick={() => {
+            if (isReplayMode) {
+              togglePlayback();
+            } else if (trailCount > 0) {
+              setMode('REPLAY');
+            }
+          }}
           disabled={trailCount === 0}
-          className="pointer-events-auto rounded border border-green-500/40 bg-green-500/20 px-3 py-1.5 text-xs text-green-400 transition-all duration-150 hover:border-green-500/60 hover:bg-green-500/30 disabled:cursor-not-allowed disabled:opacity-40"
+          className={`pointer-events-auto rounded border px-3 py-1.5 text-xs transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-40 ${
+            isReplayMode && isPlaying
+              ? 'border-amber-500/40 bg-amber-500/20 text-amber-400 hover:border-amber-500/60 hover:bg-amber-500/30'
+              : 'border-green-500/40 bg-green-500/20 text-green-400 hover:border-green-500/60 hover:bg-green-500/30'
+          }`}
         >
-          {isPlaying ? 'Stop Replay' : 'Replay'}
+          {isReplayMode && isPlaying ? 'Stop' : trailCount > 0 ? 'Replay' : 'No Data'}
         </button>
         <button onClick={clearTrails} disabled={isPlaying} className={buttonBase}>
           Clear Trails
@@ -214,7 +302,25 @@ export function ControlPanel() {
         <p className="mb-1 text-xs font-semibold text-blue-400">Keyboard Shortcuts</p>
         <p>
           <kbd className="inline-block rounded border border-blue-500/30 bg-blue-500/15 px-1 py-0.5 font-mono text-[10px] text-blue-100">
+            V
+          </kbd>{' '}
+          View &nbsp;{' '}
+          <kbd className="inline-block rounded border border-blue-500/30 bg-blue-500/15 px-1 py-0.5 font-mono text-[10px] text-blue-100">
+            P
+          </kbd>{' '}
+          Place &nbsp;{' '}
+          <kbd className="inline-block rounded border border-blue-500/30 bg-blue-500/15 px-1 py-0.5 font-mono text-[10px] text-blue-100">
+            E
+          </kbd>{' '}
+          Edit &nbsp;{' '}
+          <kbd className="inline-block rounded border border-blue-500/30 bg-blue-500/15 px-1 py-0.5 font-mono text-[10px] text-blue-100">
             R
+          </kbd>{' '}
+          Replay
+        </p>
+        <p>
+          <kbd className="inline-block rounded border border-blue-500/30 bg-blue-500/15 px-1 py-0.5 font-mono text-[10px] text-blue-100">
+            Esc
           </kbd>{' '}
           Reset &nbsp;{' '}
           <kbd className="inline-block rounded border border-blue-500/30 bg-blue-500/15 px-1 py-0.5 font-mono text-[10px] text-blue-100">
@@ -224,44 +330,13 @@ export function ControlPanel() {
         </p>
         <p>
           <kbd className="inline-block rounded border border-blue-500/30 bg-blue-500/15 px-1 py-0.5 font-mono text-[10px] text-blue-100">
-            ↑↓
+            ↑↓←→
           </kbd>{' '}
-          Insert/Withdraw &nbsp;{' '}
-          <kbd className="inline-block rounded border border-blue-500/30 bg-blue-500/15 px-1 py-0.5 font-mono text-[10px] text-blue-100">
-            ←→
-          </kbd>{' '}
-          Rotate azimuth
-        </p>
-        <p>
+          Adjust needle (Edit mode) &nbsp;
           <kbd className="inline-block rounded border border-blue-500/30 bg-blue-500/15 px-1 py-0.5 font-mono text-[10px] text-blue-100">
             1-4
           </kbd>{' '}
-          Preset tilt angles (0/15/30/45deg)
-        </p>
-        <p className="mt-1 mb-1 text-xs font-semibold text-blue-400">Mouse</p>
-        <p>
-          <kbd className="inline-block rounded border border-blue-500/30 bg-blue-500/15 px-1 py-0.5 font-mono text-[10px] text-blue-100">
-            Left Click
-          </kbd>{' '}
-          Place RCM &nbsp;{' '}
-          <kbd className="inline-block rounded border border-blue-500/30 bg-blue-500/15 px-1 py-0.5 font-mono text-[10px] text-blue-100">
-            Left Drag
-          </kbd>{' '}
-          Tilt needle &nbsp;{' '}
-          <kbd className="inline-block rounded border border-blue-500/30 bg-blue-500/15 px-1 py-0.5 font-mono text-[10px] text-blue-100">
-            Scroll
-          </kbd>{' '}
-          Insert/Withdraw
-        </p>
-        <p>
-          <kbd className="inline-block rounded border border-blue-500/30 bg-blue-500/15 px-1 py-0.5 font-mono text-[10px] text-blue-100">
-            Right Drag
-          </kbd>{' '}
-          /{' '}
-          <kbd className="inline-block rounded border border-blue-500/30 bg-blue-500/15 px-1 py-0.5 font-mono text-[10px] text-blue-100">
-            Middle Drag
-          </kbd>{' '}
-          Orbit camera
+          Presets
         </p>
       </div>
     </div>

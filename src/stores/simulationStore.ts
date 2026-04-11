@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Vec3, NeedlePose, SurgicalPhase, TrailPoint } from '../types';
+import type { Vec3, NeedlePose, SurgicalPhase, TrailPoint, SimulationMode } from '../types';
 import { SurgicalPhase as Phase } from '../types';
 import { computeNeedlePose, type RCMConfig } from '../lib/rcm';
 import { MAX_INSERTION_DEPTH, MAX_TILT_ANGLE } from '../constants';
@@ -7,6 +7,9 @@ import { MAX_INSERTION_DEPTH, MAX_TILT_ANGLE } from '../constants';
 const MAX_TRAIL_POINTS = 5000;
 
 export interface SimulationState {
+  // Mode
+  mode: SimulationMode;
+
   // RCM configuration
   rcmPoint: Vec3 | null;
   surfaceNormal: Vec3 | null;
@@ -18,7 +21,6 @@ export interface SimulationState {
 
   // Workflow
   phase: SurgicalPhase;
-  isDraggingNeedle: boolean;
 
   // Trajectory
   trailPoints: Vec3[];
@@ -30,11 +32,11 @@ export interface SimulationState {
   playbackIndex: number;
 
   // Actions
+  setMode: (mode: SimulationMode) => void;
   setRCMPoint: (rcmPoint: Vec3, surfaceNormal: Vec3) => void;
   setTiltAngles: (alpha: number, beta: number) => void;
   setInsertionDepth: (depth: number) => void;
   setPhase: (phase: SurgicalPhase) => void;
-  setIsDraggingNeedle: (dragging: boolean) => void;
   addTrailPoint: (point: Vec3, tiltAlpha: number, tiltBeta: number, insertionDepth: number) => void;
   importTrailData: (data: TrailPoint[]) => void;
   clearTrails: () => void;
@@ -59,21 +61,25 @@ function getRCMConfig(
 }
 
 export const useSimulationStore = create<SimulationState>((set, get) => ({
+  mode: 'VIEW',
   rcmPoint: null,
   surfaceNormal: null,
   tiltAlpha: 0,
   tiltBeta: 0,
   insertionDepth: 0,
   phase: Phase.IDLE,
-  isDraggingNeedle: false,
   trailPoints: [],
   trailData: [],
   isPlaying: false,
   playbackSpeed: 1,
   playbackIndex: 0,
 
+  setMode: (mode) => {
+    set({ mode });
+  },
+
   setRCMPoint: (rcmPoint, surfaceNormal) => {
-    set({ rcmPoint, surfaceNormal, phase: Phase.CONTACT });
+    set({ rcmPoint, surfaceNormal, phase: Phase.CONTACT, mode: 'EDIT' });
   },
 
   setTiltAngles: (tiltAlpha, tiltBeta) => {
@@ -99,9 +105,6 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
 
   setPhase: (phase) => {
     set({ phase });
-  },
-  setIsDraggingNeedle: (dragging: boolean) => {
-    set({ isDraggingNeedle: dragging });
   },
 
   addTrailPoint: (tipPosition, tiltAlpha, tiltBeta, insertionDepth) => {
@@ -170,13 +173,13 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
 
   reset: () => {
     set({
+      mode: 'VIEW',
       rcmPoint: null,
       surfaceNormal: null,
       tiltAlpha: 0,
       tiltBeta: 0,
       insertionDepth: 0,
       phase: Phase.IDLE,
-      isDraggingNeedle: false,
       trailPoints: [],
       trailData: [],
       isPlaying: false,

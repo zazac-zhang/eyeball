@@ -80,13 +80,13 @@ describe('reset', () => {
     useSimulationStore.getState().setInsertionDepth(10);
     useSimulationStore.getState().reset();
     const state = useSimulationStore.getState();
+    expect(state.mode).toBe('VIEW');
     expect(state.rcmPoint).toBeNull();
     expect(state.surfaceNormal).toBeNull();
     expect(state.tiltAlpha).toBe(0);
     expect(state.tiltBeta).toBe(0);
     expect(state.insertionDepth).toBe(0);
     expect(state.phase).toBe(SurgicalPhase.IDLE);
-    expect(state.isDraggingNeedle).toBe(false);
     expect(state.trailPoints).toEqual([]);
     expect(state.trailData).toEqual([]);
     expect(state.isPlaying).toBe(false);
@@ -131,5 +131,32 @@ describe('advancePlayback', () => {
     useSimulationStore.getState().setPlaybackIndex(1);
     useSimulationStore.getState().advancePlayback();
     expect(useSimulationStore.getState().isPlaying).toBe(false);
+  });
+});
+
+describe('mode', () => {
+  test('initial mode is VIEW', () => {
+    expect(useSimulationStore.getState().mode).toBe('VIEW');
+  });
+
+  test('setMode changes mode', () => {
+    useSimulationStore.getState().setMode('PLACE');
+    expect(useSimulationStore.getState().mode).toBe('PLACE');
+    useSimulationStore.getState().setMode('EDIT');
+    expect(useSimulationStore.getState().mode).toBe('EDIT');
+    useSimulationStore.getState().setMode('REPLAY');
+    expect(useSimulationStore.getState().mode).toBe('REPLAY');
+  });
+
+  test('setRCMPoint auto-transitions to EDIT mode', () => {
+    useSimulationStore.getState().setMode('PLACE');
+    useSimulationStore.getState().setRCMPoint([0, 0, 12], [0, 0, 1]);
+    expect(useSimulationStore.getState().mode).toBe('EDIT');
+  });
+
+  test('reset returns mode to VIEW', () => {
+    useSimulationStore.getState().setMode('EDIT');
+    useSimulationStore.getState().reset();
+    expect(useSimulationStore.getState().mode).toBe('VIEW');
   });
 });
