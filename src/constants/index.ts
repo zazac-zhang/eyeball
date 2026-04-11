@@ -5,7 +5,9 @@ export const MAX_TILT_ANGLE = Math.PI / 4; // 45 degrees
 export const COLORS = {
   background: '#0a0a1a',
   sclera: '#f5f5f0',
+  interior: '#1a1a2e',
   cornea: '#cce5ff',
+  iris: '#4a90d9',
   lens: '#e8e0d0',
   limbus: '#a0c4e8',
   needleShaft: '#c0c0c0',
