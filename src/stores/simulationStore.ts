@@ -13,6 +13,7 @@ export interface SimulationState {
   // RCM configuration
   rcmPoint: Vec3 | null;
   surfaceNormal: Vec3 | null;
+  isDraggingRCM: boolean;
 
   // Needle parameters
   tiltAlpha: number;
@@ -34,6 +35,7 @@ export interface SimulationState {
   // Actions
   setMode: (mode: SimulationMode) => void;
   setRCMPoint: (rcmPoint: Vec3, surfaceNormal: Vec3) => void;
+  setIsDraggingRCM: (isDragging: boolean) => void;
   setTiltAngles: (alpha: number, beta: number) => void;
   setInsertionDepth: (depth: number) => void;
   setPhase: (phase: SurgicalPhase) => void;
@@ -65,6 +67,7 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
   mode: 'VIEW',
   rcmPoint: null,
   surfaceNormal: null,
+  isDraggingRCM: false,
   tiltAlpha: 0,
   tiltBeta: 0,
   insertionDepth: 0,
@@ -81,6 +84,10 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
 
   setRCMPoint: (rcmPoint, surfaceNormal) => {
     set({ rcmPoint, surfaceNormal, phase: Phase.CONTACT, mode: 'EDIT' });
+  },
+
+  setIsDraggingRCM: (isDraggingRCM) => {
+    set({ isDraggingRCM });
   },
 
   setTiltAngles: (tiltAlpha, tiltBeta) => {
@@ -183,6 +190,7 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
       mode: 'VIEW',
       rcmPoint: null,
       surfaceNormal: null,
+      isDraggingRCM: false,
       tiltAlpha: 0,
       tiltBeta: 0,
       insertionDepth: 0,

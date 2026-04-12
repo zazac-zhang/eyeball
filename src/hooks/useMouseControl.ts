@@ -8,16 +8,18 @@ import type { Vec3 } from '../types';
 /**
  * Handles mouse/pointer interaction on the eyeball, gated by simulation mode:
  * - VIEW: all handlers are no-ops (OrbitControls handles camera)
- * - PLACE: click places RCM point, then auto-switches to EDIT
+ * - PLACE: click places RCM point if none exists, drag to move existing RCM
  * - EDIT: drag adjusts tilt angles, scroll adjusts insertion depth
  * - REPLAY: all handlers are no-ops (OrbitControls handles camera)
  */
 export function useMouseControl() {
   const isDragging = useRef(false);
+  const isDraggingRCM = useRef(false);
   const lastMouse = useRef({ x: 0, y: 0 });
 
   const mode = useSimulationStore((s) => s.mode);
   const setRCMPoint = useSimulationStore((s) => s.setRCMPoint);
+  const setIsDraggingRCM = useSimulationStore((s) => s.setIsDraggingRCM);
   const setTiltAngles = useSimulationStore((s) => s.setTiltAngles);
   const setInsertionDepth = useSimulationStore((s) => s.setInsertionDepth);
   const tiltAlpha = useSimulationStore((s) => s.tiltAlpha);
@@ -29,6 +31,10 @@ export function useMouseControl() {
     (e: ThreeEvent<MouseEvent>) => {
       if (mode !== 'PLACE') return;
 
+      // If RCM point already exists, don't create new one on click
+      // (dragging is handled in handlePointerDown/Move/Up)
+      if (rcmPointSet) return;
+
       const rayOrigin: Vec3 = [e.ray.origin.x, e.ray.origin.y, e.ray.origin.z];
       const rayDir: Vec3 = [e.ray.direction.x, e.ray.direction.y, e.ray.direction.z];
       const result = computeRCMFromRay(rayOrigin, rayDir, [0, 0, 0], EYEBALL_RADIUS);
@@ -37,40 +43,70 @@ export function useMouseControl() {
       e.stopPropagation();
       setRCMPoint(result.rcmPoint, result.surfaceNormal);
     },
-    [mode, setRCMPoint]
+    [mode, rcmPointSet, setRCMPoint]
   );
 
   const handlePointerDown = useCallback(
     (e: ThreeEvent<PointerEvent>) => {
-      if (mode !== 'EDIT' || !rcmPointSet) return;
-      if (e.button !== 0) return;
-      isDragging.current = true;
-      lastMouse.current = { x: e.clientX, y: e.clientY };
+      // EDIT mode: drag to adjust tilt angles
+      if (mode === 'EDIT' && rcmPointSet && e.button === 0) {
+        isDragging.current = true;
+        lastMouse.current = { x: e.clientX, y: e.clientY };
+        return;
+      }
+
+      // PLACE mode with existing RCM: start dragging RCM point
+      if (mode === 'PLACE' && rcmPointSet && e.button === 0) {
+        isDraggingRCM.current = true;
+        setIsDraggingRCM(true);
+        lastMouse.current = { x: e.clientX, y: e.clientY };
+        e.stopPropagation();
+        return;
+      }
     },
-    [mode, rcmPointSet]
+    [mode, rcmPointSet, setIsDraggingRCM]
   );
 
   const handlePointerMove = useCallback(
     (e: ThreeEvent<PointerEvent>) => {
-      if (mode !== 'EDIT' || !isDragging.current || !rcmPointSet) return;
-      const dx = e.clientX - lastMouse.current.x;
-      const dy = e.clientY - lastMouse.current.y;
-      lastMouse.current = { x: e.clientX, y: e.clientY };
+      // EDIT mode: dragging adjusts tilt angles
+      if (mode === 'EDIT' && isDragging.current && rcmPointSet) {
+        const dx = e.clientX - lastMouse.current.x;
+        const dy = e.clientY - lastMouse.current.y;
+        lastMouse.current = { x: e.clientX, y: e.clientY };
 
-      const sensitivity = 0.005;
-      const newBeta = tiltBeta + dx * sensitivity;
-      const newAlpha = Math.max(
-        -MAX_TILT_ANGLE,
-        Math.min(MAX_TILT_ANGLE, tiltAlpha + dy * sensitivity)
-      );
-      setTiltAngles(newAlpha, newBeta);
+        const sensitivity = 0.005;
+        const newBeta = tiltBeta + dx * sensitivity;
+        const newAlpha = Math.max(
+          -MAX_TILT_ANGLE,
+          Math.min(MAX_TILT_ANGLE, tiltAlpha + dy * sensitivity)
+        );
+        setTiltAngles(newAlpha, newBeta);
+        return;
+      }
+
+      // PLACE mode: dragging moves RCM point
+      if (mode === 'PLACE' && isDraggingRCM.current) {
+        e.stopPropagation();
+        const rayOrigin: Vec3 = [e.ray.origin.x, e.ray.origin.y, e.ray.origin.z];
+        const rayDir: Vec3 = [e.ray.direction.x, e.ray.direction.y, e.ray.direction.z];
+        const result = computeRCMFromRay(rayOrigin, rayDir, [0, 0, 0], EYEBALL_RADIUS);
+        if (result) {
+          setRCMPoint(result.rcmPoint, result.surfaceNormal);
+        }
+        return;
+      }
     },
-    [mode, rcmPointSet, tiltAlpha, tiltBeta, setTiltAngles]
+    [mode, rcmPointSet, tiltAlpha, tiltBeta, setTiltAngles, setRCMPoint]
   );
 
   const handlePointerUp = useCallback(() => {
+    if (isDraggingRCM.current) {
+      isDraggingRCM.current = false;
+      setIsDraggingRCM(false);
+    }
     isDragging.current = false;
-  }, []);
+  }, [setIsDraggingRCM]);
 
   const handleWheel = useCallback(
     (e: ThreeEvent<WheelEvent>) => {
