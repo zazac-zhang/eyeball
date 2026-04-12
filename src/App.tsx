@@ -6,6 +6,7 @@ import { ModePanel } from './components/hud/ModePanel';
 import { RCMPointList } from './components/hud/RCMPointList';
 import { RealTimeChart } from './components/hud/RealTimeChart';
 import { MiniMap } from './components/hud/MiniMap';
+import { HUDLayout, HUDPanel } from './components/hud/ResponsiveHUD';
 import { useThemeStore } from './stores/themeStore';
 import './index.css';
 
@@ -22,17 +23,26 @@ function App() {
           <Scene />
         </Canvas>
       </div>
-      <div className="pointer-events-none absolute inset-0 flex flex-col justify-between p-4">
-        <div className="flex items-start justify-between">
-          <KinematicsPanel />
-          <ModePanel />
-        </div>
-        <div className="flex justify-end">
-          <ControlPanel />
-        </div>
-      </div>
+      <HUDLayout
+        topLeft={
+          <HUDPanel title="Kinematics">
+            <KinematicsPanel />
+          </HUDPanel>
+        }
+        topRight={<ModePanel />}
+        bottomRight={
+          <HUDPanel title="Controls" defaultOpen={false}>
+            <ControlPanel />
+          </HUDPanel>
+        }
+        bottomLeft={
+          <HUDPanel title="Minimap" defaultOpen={false}>
+            <MiniMap />
+          </HUDPanel>
+        }
+      />
       <RCMPointList />
-      <div className="pointer-events-none absolute bottom-4 left-4">
+      <div className="pointer-events-none absolute bottom-4 left-4 hidden lg:block">
         <MiniMap />
       </div>
       <RealTimeChart />

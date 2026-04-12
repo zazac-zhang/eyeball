@@ -34,11 +34,11 @@ export function RealTimeChart() {
 
   if (chartData.length < 2 && mode !== 'EDIT') {
     return (
-      <div className="pointer-events-auto min-w-[300px] rounded-lg border border-blue-500/30 bg-gray-950/85 p-4 text-blue-100 backdrop-blur">
-        <h3 className="mb-3 border-b border-blue-500/20 pb-2 text-sm font-semibold tracking-wider text-blue-400 uppercase">
+      <div className="pointer-events-auto fixed inset-x-2 bottom-2 rounded-lg border border-blue-500/30 bg-gray-950/85 p-3 text-blue-100 backdrop-blur sm:min-w-[300px] sm:p-4 lg:bottom-4 lg:left-4 lg:w-auto lg:max-w-[calc(100vw-2rem)]">
+        <h3 className="mb-2 border-b border-blue-500/20 pb-1 text-xs font-semibold tracking-wider text-blue-400 uppercase sm:mb-3 sm:text-sm">
           Depth Chart
         </h3>
-        <div className="flex h-[150px] items-center justify-center text-xs text-blue-300/50">
+        <div className="flex h-[120px] items-center justify-center text-xs text-blue-300/50 sm:h-[150px]">
           No data yet - start inserting needle
         </div>
       </div>
@@ -46,9 +46,9 @@ export function RealTimeChart() {
   }
 
   return (
-    <div className="pointer-events-auto min-w-[300px] rounded-lg border border-blue-500/30 bg-gray-950/85 p-4 text-blue-100 backdrop-blur">
-      <div className="mb-3 flex items-center justify-between border-b border-blue-500/20 pb-2">
-        <h3 className="text-sm font-semibold tracking-wider text-blue-400 uppercase">
+    <div className="pointer-events-auto fixed inset-x-2 bottom-2 rounded-lg border border-blue-500/30 bg-gray-950/85 p-3 text-blue-100 backdrop-blur sm:min-w-[300px] sm:p-4 lg:bottom-4 lg:left-4 lg:w-auto lg:max-w-[calc(100vw-2rem)]">
+      <div className="mb-2 flex items-center justify-between border-b border-blue-500/20 pb-1 sm:mb-3 sm:pb-2">
+        <h3 className="text-xs font-semibold tracking-wider text-blue-400 uppercase sm:text-sm">
           Depth Chart
         </h3>
         <div className="text-xs text-blue-300/70">
@@ -56,7 +56,7 @@ export function RealTimeChart() {
         </div>
       </div>
 
-      <div className="h-[150px] w-full">
+      <div className="h-[120px] w-full sm:h-[150px]">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={formattedData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#1e3a5f" />
@@ -77,7 +77,7 @@ export function RealTimeChart() {
                 border: '1px solid rgba(100, 140, 255, 0.3)',
                 borderRadius: '4px',
                 color: '#c8d8f0',
-                fontSize: '12px',
+                fontSize: window.innerWidth < 640 ? '10px' : '12px',
               }}
               labelStyle={{ color: '#93c5fd' }}
             />
@@ -94,7 +94,7 @@ export function RealTimeChart() {
       </div>
 
       {chartData.length > 0 && (
-        <div className="mt-2 border-t border-blue-500/15 pt-2 text-[10px] text-blue-300/60">
+        <div className="mt-2 border-t border-blue-500/15 pt-2 text-[9px] text-blue-300/60 sm:text-[10px]">
           {chartData.length} data points • Last {((chartData[chartData.length - 1].timestamp - chartData[0].timestamp) / 1000).toFixed(1)}s
         </div>
       )}

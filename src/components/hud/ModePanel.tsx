@@ -63,7 +63,7 @@ export function ModePanel() {
   );
 
   return (
-    <div className="pointer-events-auto flex items-center gap-1 rounded-lg border border-blue-500/30 bg-gray-950/85 px-1.5 py-1 backdrop-blur-sm">
+    <div className="pointer-events-auto flex items-center gap-1 rounded-lg border border-blue-500/30 bg-gray-950/85 px-1 py-0.5 backdrop-blur-sm sm:px-1.5 sm:py-1">
       {MODES.map(({ mode: m, label, shortcut, activeBg, activeBorder, activeText }) => {
         const isActive = mode === m;
         const disabled = isDisabled(m);

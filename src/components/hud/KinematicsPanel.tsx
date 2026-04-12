@@ -33,8 +33,8 @@ export function KinematicsPanel() {
   }, [rcmPoint, surfaceNormal, tiltAlpha, tiltBeta, insertionDepth]);
 
   return (
-    <div className="pointer-events-auto min-w-[240px] rounded-lg border border-blue-500/30 bg-gray-950/85 p-4 text-blue-100 backdrop-blur">
-      <h3 className="mb-3 border-b border-blue-500/20 pb-2 text-sm font-semibold tracking-wider text-blue-400 uppercase">
+    <div className="pointer-events-auto w-full rounded-lg border border-blue-500/30 bg-gray-950/85 p-3 text-blue-100 backdrop-blur sm:min-w-[240px] sm:p-4">
+      <h3 className="mb-2 border-b border-blue-500/20 pb-1 text-xs font-semibold tracking-wider text-blue-400 uppercase sm:mb-3 sm:text-sm">
         Kinematics
       </h3>
       {pose ? (
