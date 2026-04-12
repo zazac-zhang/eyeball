@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useSimulationStore } from '../../stores/simulationStore';
 import { computeNeedlePose, type RCMConfig } from '../../lib/rcm';
 import { MAX_INSERTION_DEPTH, MAX_TILT_ANGLE } from '../../constants';
+import { usePhaseTransitionFlash } from '../../hooks/usePhaseTransition';
 
 const phaseColorMap: Record<string, string> = {
   IDLE: 'text-gray-400',
@@ -18,6 +19,7 @@ export function KinematicsPanel() {
   const phase = useSimulationStore((s) => s.phase);
   const rcmPoint = useSimulationStore((s) => s.rcmPoint);
   const surfaceNormal = useSimulationStore((s) => s.surfaceNormal);
+  const isPhaseTransitioning = usePhaseTransitionFlash();
 
   const pose = useMemo(() => {
     if (!rcmPoint || !surfaceNormal) return null;
@@ -40,10 +42,18 @@ export function KinematicsPanel() {
           <tbody>
             <tr>
               <td className="py-1 pr-3 text-blue-300/70">Phase</td>
-              <td
-                className={`py-1 text-right font-mono text-xs ${phaseColorMap[phase] ?? 'text-blue-100'}`}
-              >
-                {phase}
+              <td className="py-1 text-right">
+                <span
+                  className={`inline-block rounded px-2 py-0.5 text-[11px] font-semibold tracking-wider transition-all duration-300 ${
+                    phaseColorMap[phase] ?? 'text-blue-100'
+                  } ${
+                    isPhaseTransitioning
+                      ? 'scale-110 shadow-lg shadow-blue-500/50 animate-pulse'
+                      : ''
+                  }`}
+                >
+                  {phase}
+                </span>
               </td>
             </tr>
             <tr>

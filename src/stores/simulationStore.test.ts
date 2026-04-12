@@ -69,6 +69,9 @@ describe('setInsertionDepth', () => {
     useSimulationStore.getState().setInsertionDepth(5);
     useSimulationStore.getState().setPhase(SurgicalPhase.WITHDRAWING);
     useSimulationStore.getState().setInsertionDepth(0);
+    expect(useSimulationStore.getState().phase).toBe(SurgicalPhase.WITHDRAWING);
+    // Complete transition now requires explicit user action
+    useSimulationStore.getState().completeSurgery();
     expect(useSimulationStore.getState().phase).toBe(SurgicalPhase.COMPLETE);
   });
 });

@@ -69,3 +69,55 @@ export function importTrailJSON(file: File): Promise<ExportedTrailData | null> {
     reader.readAsText(file);
   });
 }
+
+/** Screen recording state and controls. */
+export interface ScreenRecorder {
+  start: () => void;
+  stop: () => void;
+  isRecording: () => boolean;
+}
+
+export function createScreenRecorder(canvas: HTMLCanvasElement): ScreenRecorder {
+  let mediaRecorder: MediaRecorder | null = null;
+  let chunks: Blob[] = [];
+
+  return {
+    start: () => {
+      if (mediaRecorder?.state === 'recording') return;
+
+      const stream = canvas.captureStream(60); // 60 FPS
+      mediaRecorder = new MediaRecorder(stream, {
+        mimeType: 'video/webm;codecs=vp9',
+      });
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          chunks.push(e.data);
+        }
+      };
+
+      mediaRecorder.start();
+    },
+
+    stop: () => {
+      if (mediaRecorder?.state !== 'recording') return;
+
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(chunks, { type: 'video/webm' });
+        chunks = [];
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `eyeball-recording-${String(Date.now())}.webm`;
+        a.click();
+        URL.revokeObjectURL(url);
+      };
+
+      mediaRecorder.stop();
+    },
+
+    isRecording: () => {
+      return mediaRecorder?.state === 'recording';
+    },
+  };
+}

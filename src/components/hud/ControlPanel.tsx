@@ -1,7 +1,8 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useState, useEffect } from 'react';
 import { useSimulationStore } from '../../stores/simulationStore';
 import { MAX_INSERTION_DEPTH, MAX_TILT_ANGLE } from '../../constants';
-import { exportTrailJSON, importTrailJSON } from '../../lib/export';
+import { exportTrailJSON, importTrailJSON, createScreenRecorder } from '../../lib/export';
+import { SettingsPanel } from './SettingsPanel';
 
 const phaseBadgeStyle: Record<string, string> = {
   IDLE: 'bg-gray-500/20 text-gray-400',
@@ -18,8 +19,12 @@ const buttonBase =
 
 export function ControlPanel() {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showSettings, setShowSettings] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recorder, setRecorder] = useState<ReturnType<typeof createScreenRecorder> | null>(null);
   const mode = useSimulationStore((s) => s.mode);
   const clearTrails = useSimulationStore((s) => s.clearTrails);
+  const completeSurgery = useSimulationStore((s) => s.completeSurgery);
   const reset = useSimulationStore((s) => s.reset);
   const setMode = useSimulationStore((s) => s.setMode);
   const togglePlayback = useSimulationStore((s) => s.togglePlayback);
@@ -69,6 +74,26 @@ export function ControlPanel() {
       URL.revokeObjectURL(url);
     }, 'image/png');
   }, []);
+
+  // Initialize screen recorder
+  useEffect(() => {
+    const canvas = document.querySelector<HTMLCanvasElement>('canvas');
+    if (!canvas) return;
+    requestAnimationFrame(() => {
+      setRecorder(createScreenRecorder(canvas));
+    });
+  }, []);
+
+  const handleToggleRecording = useCallback(() => {
+    if (!recorder) return;
+    if (recorder.isRecording()) {
+      recorder.stop();
+      setIsRecording(false);
+    } else {
+      recorder.start();
+      setIsRecording(true);
+    }
+  }, [recorder]);
 
   const isEditMode = mode === 'EDIT';
   const isReplayMode = mode === 'REPLAY';
@@ -257,6 +282,19 @@ export function ControlPanel() {
           <button onClick={handleScreenshot} className={buttonBase}>
             Screenshot
           </button>
+          <button
+            onClick={handleToggleRecording}
+            className={`pointer-events-auto rounded border px-3 py-1.5 text-xs transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-40 ${
+              isRecording
+                ? 'border-red-500/40 bg-red-500/20 text-red-400 hover:border-red-500/60 hover:bg-red-500/30'
+                : 'border-purple-500/40 bg-purple-500/20 text-purple-400 hover:border-purple-500/60 hover:bg-purple-500/30'
+            }`}
+          >
+            {isRecording ? '⏹ Stop' : '⏺ Record'}
+          </button>
+          <button onClick={() => { setShowSettings(true); }} className={buttonBase}>
+            Settings
+          </button>
           <input
             ref={fileInputRef}
             type="file"
@@ -288,6 +326,13 @@ export function ControlPanel() {
         </button>
         <button onClick={clearTrails} disabled={isPlaying} className={buttonBase}>
           Clear Trails
+        </button>
+        <button
+          onClick={completeSurgery}
+          disabled={phase !== 'WITHDRAWING'}
+          className="pointer-events-auto rounded border border-green-500/40 bg-green-500/20 px-3 py-1.5 text-xs text-green-400 transition-all duration-150 hover:border-green-500/60 hover:bg-green-500/30 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Complete
         </button>
         <button
           onClick={reset}
@@ -339,6 +384,8 @@ export function ControlPanel() {
           Presets
         </p>
       </div>
+
+      {showSettings && <SettingsPanel onClose={() => { setShowSettings(false); }} />}
     </div>
   );
 }

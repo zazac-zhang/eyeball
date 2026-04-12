@@ -44,6 +44,7 @@ export interface SimulationState {
   setPlaybackSpeed: (speed: number) => void;
   setPlaybackIndex: (index: number) => void;
   advancePlayback: () => void;
+  completeSurgery: () => void;
   reset: () => void;
   getNeedlePose: () => NeedlePose | null;
 }
@@ -97,9 +98,8 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
       newPhase = Phase.INSERTING;
     } else if (clamped <= 0 && phase === Phase.INSERTING) {
       newPhase = Phase.WITHDRAWING;
-    } else if (clamped <= 0 && phase === Phase.WITHDRAWING) {
-      newPhase = Phase.COMPLETE;
     }
+    // Note: WITHDRAWING → COMPLETE requires explicit user action (completeSurgery)
     set({ insertionDepth: clamped, phase: newPhase });
   },
 
@@ -169,6 +169,13 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
       insertionDepth: currentPoint.insertionDepth,
       playbackIndex: nextIndex,
     });
+  },
+
+  completeSurgery: () => {
+    const { phase } = get();
+    if (phase === Phase.WITHDRAWING) {
+      set({ phase: Phase.COMPLETE });
+    }
   },
 
   reset: () => {
