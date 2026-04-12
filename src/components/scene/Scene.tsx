@@ -1,5 +1,5 @@
 import { OrbitControls } from '@react-three/drei';
-import { EffectComposer, Bloom } from '@react-three/postprocessing';
+import { EffectComposer, Bloom, SSAO, DepthOfField } from '@react-three/postprocessing';
 import { Eyeball } from '../eyeball/Eyeball';
 import { Needle } from '../needle/Needle';
 import { DepthRuler } from '../needle/DepthRuler';
@@ -50,6 +50,18 @@ export function Scene() {
           luminanceSmoothing={0.9}
           mipmapBlur
           intensity={1.5}
+        />
+        <SSAO
+          samples={32}
+          radius={0.1}
+          intensity={0.5}
+          bias={0.2}
+        />
+        <DepthOfField
+          worldFocusDistance={15}
+          worldFocusRange={5}
+          bokehScale={3}
+          height={480}
         />
       </EffectComposer>
     </>
