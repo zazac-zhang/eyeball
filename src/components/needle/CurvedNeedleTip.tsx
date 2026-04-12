@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import * as THREE from 'three';
 import { COLORS } from '../../constants';
+import { useCollisionDetection } from '../../hooks/useCollisionDetection';
 
 interface CurvedNeedleTipProps {
   position: [number, number, number];
@@ -12,18 +13,22 @@ interface CurvedNeedleTipProps {
  * Uses a CatmullRomCurve3 to create a smooth 180° curve with a tapered
  * diameter (thick at shaft connection, thin at tip). Real surgical needles
  * are typically curved needles (1/2 circle, 3/8 circle, etc.).
+ *
+ * Glows when colliding with eyeball surface.
  */
 export function CurvedNeedleTip({ position }: CurvedNeedleTipProps) {
+  const { isColliding } = useCollisionDetection();
+
   const geometry = useMemo(() => {
     // Create a curved path (180° semi-circle)
     const curve = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(0, 0, 0),           // Start (connection to shaft)
-      new THREE.Vector3(0, 0.5, 0.4),       // Control point 1
-      new THREE.Vector3(0, 1.0, 0.7),       // Control point 2
-      new THREE.Vector3(0, 1.5, 0.85),      // Control point 3
-      new THREE.Vector3(0, 2.0, 0.9),       // Control point 4
-      new THREE.Vector3(0, 2.5, 0.85),      // Control point 5
-      new THREE.Vector3(0, 3.0, 0.7),       // Control point 6 (tip)
+      new THREE.Vector3(0, 0, 0), // Start (connection to shaft)
+      new THREE.Vector3(0, 0.5, 0.4), // Control point 1
+      new THREE.Vector3(0, 1.0, 0.7), // Control point 2
+      new THREE.Vector3(0, 1.5, 0.85), // Control point 3
+      new THREE.Vector3(0, 2.0, 0.9), // Control point 4
+      new THREE.Vector3(0, 2.5, 0.85), // Control point 5
+      new THREE.Vector3(0, 3.0, 0.7), // Control point 6 (tip)
     ]);
 
     // Create tubular geometry along the curve
@@ -55,11 +60,11 @@ export function CurvedNeedleTip({ position }: CurvedNeedleTipProps) {
   return (
     <mesh geometry={geometry} position={position}>
       <meshStandardMaterial
-        color={COLORS.needleTip}
+        color={isColliding ? '#ff6600' : COLORS.needleTip}
         metalness={0.9}
         roughness={0.1}
-        emissive={COLORS.needleTip}
-        emissiveIntensity={0.1}
+        emissive={isColliding ? '#ff3300' : COLORS.needleTip}
+        emissiveIntensity={isColliding ? 0.5 : 0.1}
       />
     </mesh>
   );

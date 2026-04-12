@@ -9,6 +9,7 @@ import { RCMConstraintLine } from '../trajectory/RCMConstraintLine';
 import { NormalIndicator } from '../trajectory/NormalIndicator';
 import { SafetyCone } from '../trajectory/SafetyCone';
 import { ObjectLabels } from '../trajectory/ObjectLabels';
+import { CollisionIndicator } from '../trajectory/CollisionIndicator';
 import { Lighting } from './Lighting';
 import { ScleraClickHandler } from './ScleraClickHandler';
 import { useTrajectoryRecorder } from '../../hooks/useTrajectory';
@@ -32,6 +33,7 @@ export function Scene() {
       <NormalIndicator />
       <SafetyCone />
       <ObjectLabels />
+      <CollisionIndicator />
       <ScleraClickHandler />
       <OrbitControls
         enabled={mode !== 'EDIT'}
