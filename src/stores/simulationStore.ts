@@ -82,7 +82,10 @@ function createHistorySnapshot(state: SimulationState): HistoryState {
     insertionDepth: state.insertionDepth,
     phase: state.phase,
     trailPoints: state.trailPoints.map((p) => [...p]) as Vec3[],
-    trailData: state.trailData.map((d) => ({ ...d })),
+    trailData: state.trailData.map((d) => ({
+      ...d,
+      tipPosition: [...d.tipPosition] as Vec3,
+    })),
   };
 }
 
@@ -148,7 +151,13 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
 
   addTrailPoint: (tipPosition, tiltAlpha, tiltBeta, insertionDepth) => {
     set((state) => {
-      const point: TrailPoint = { tipPosition, tiltAlpha, tiltBeta, insertionDepth };
+      const point: TrailPoint = {
+        tipPosition,
+        tiltAlpha,
+        tiltBeta,
+        insertionDepth,
+        timestamp: Date.now(),
+      };
       const newData = [...state.trailData, point];
       const newPositions = [...state.trailPoints, tipPosition];
       if (newData.length > MAX_TRAIL_POINTS) {

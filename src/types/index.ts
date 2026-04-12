@@ -27,6 +27,7 @@ export interface TrailPoint {
   tiltAlpha: number;
   tiltBeta: number;
   insertionDepth: number;
+  timestamp: number; // Unix timestamp in ms
 }
 
 export interface SimulationState {

@@ -20,6 +20,7 @@ export interface ExportedTrailData {
     tiltAlpha: number;
     tiltBeta: number;
     insertionDepth: number;
+    timestamp: number;
   }>;
 }
 
@@ -29,6 +30,7 @@ export function exportTrailJSON(
     tiltAlpha: number;
     tiltBeta: number;
     insertionDepth: number;
+    timestamp: number;
   }>,
   filename = 'eyeball-trail.json'
 ) {
