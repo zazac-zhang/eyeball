@@ -42,6 +42,10 @@ export function ControlPanel() {
   const phase = useSimulationStore((s) => s.phase);
   const rcmPoint = useSimulationStore((s) => s.rcmPoint);
   const trailCount = useSimulationStore((s) => s.trailPoints.length);
+  const canUndo = useSimulationStore((s) => s.canUndo);
+  const canRedo = useSimulationStore((s) => s.canRedo);
+  const undo = useSimulationStore((s) => s.undo);
+  const redo = useSimulationStore((s) => s.redo);
 
   const handleExport = useCallback(() => {
     exportTrailJSON(trailData);
@@ -324,6 +328,20 @@ export function ControlPanel() {
         >
           {isReplayMode && isPlaying ? 'Stop' : trailCount > 0 ? 'Replay' : 'No Data'}
         </button>
+        <button
+          onClick={undo}
+          disabled={!canUndo || isPlaying}
+          className="pointer-events-auto rounded border border-blue-500/40 bg-blue-500/20 px-3 py-1.5 text-xs text-blue-100 transition-all duration-150 hover:bg-blue-500/40 hover:border-blue-500/60 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          ↩ Undo
+        </button>
+        <button
+          onClick={redo}
+          disabled={!canRedo || isPlaying}
+          className="pointer-events-auto rounded border border-blue-500/40 bg-blue-500/20 px-3 py-1.5 text-xs text-blue-100 transition-all duration-150 hover:bg-blue-500/40 hover:border-blue-500/60 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          ↪ Redo
+        </button>
         <button onClick={clearTrails} disabled={isPlaying} className={buttonBase}>
           Clear Trails
         </button>
@@ -371,7 +389,15 @@ export function ControlPanel() {
           <kbd className="inline-block rounded border border-blue-500/30 bg-blue-500/15 px-1 py-0.5 font-mono text-[10px] text-blue-100">
             C
           </kbd>{' '}
-          Clear trails
+          Clear trails &nbsp;{' '}
+          <kbd className="inline-block rounded border border-blue-500/30 bg-blue-500/15 px-1 py-0.5 font-mono text-[10px] text-blue-100">
+            Ctrl+Z
+          </kbd>{' '}
+          Undo &nbsp;{' '}
+          <kbd className="inline-block rounded border border-blue-500/30 bg-blue-500/15 px-1 py-0.5 font-mono text-[10px] text-blue-100">
+            Ctrl+Shift+Z
+          </kbd>{' '}
+          Redo
         </p>
         <p>
           <kbd className="inline-block rounded border border-blue-500/30 bg-blue-500/15 px-1 py-0.5 font-mono text-[10px] text-blue-100">

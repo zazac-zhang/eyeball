@@ -42,3 +42,15 @@ export interface SimulationState {
   playbackIndex: number;
   trailPoints: Vec3[];
 }
+
+/** Snapshot of simulation state for undo/redo functionality */
+export interface HistoryState {
+  rcmPoint: Vec3 | null;
+  surfaceNormal: Vec3 | null;
+  tiltAlpha: number;
+  tiltBeta: number;
+  insertionDepth: number;
+  phase: SurgicalPhase;
+  trailPoints: Vec3[];
+  trailData: TrailPoint[];
+}

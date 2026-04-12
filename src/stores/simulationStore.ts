@@ -1,10 +1,11 @@
 import { create } from 'zustand';
-import type { Vec3, NeedlePose, SurgicalPhase, TrailPoint, SimulationMode } from '../types';
+import type { Vec3, NeedlePose, SurgicalPhase, TrailPoint, SimulationMode, HistoryState } from '../types';
 import { SurgicalPhase as Phase } from '../types';
 import { computeNeedlePose, type RCMConfig } from '../lib/rcm';
 import { MAX_INSERTION_DEPTH, MAX_TILT_ANGLE } from '../constants';
 
 const MAX_TRAIL_POINTS = 5000;
+const MAX_HISTORY = 50;
 
 export interface SimulationState {
   // Mode
@@ -26,6 +27,12 @@ export interface SimulationState {
   // Trajectory
   trailPoints: Vec3[];
   trailData: TrailPoint[];
+
+  // History for undo/redo
+  history: HistoryState[];
+  historyIndex: number;
+  canUndo: boolean;
+  canRedo: boolean;
 
   // Playback
   isPlaying: boolean;
@@ -49,6 +56,9 @@ export interface SimulationState {
   completeSurgery: () => void;
   reset: () => void;
   getNeedlePose: () => NeedlePose | null;
+  saveToHistory: () => void;
+  undo: () => void;
+  redo: () => void;
 }
 
 function getRCMConfig(
@@ -63,6 +73,19 @@ function getRCMConfig(
   };
 }
 
+function createHistorySnapshot(state: SimulationState): HistoryState {
+  return {
+    rcmPoint: state.rcmPoint ? [...state.rcmPoint] : null,
+    surfaceNormal: state.surfaceNormal ? [...state.surfaceNormal] : null,
+    tiltAlpha: state.tiltAlpha,
+    tiltBeta: state.tiltBeta,
+    insertionDepth: state.insertionDepth,
+    phase: state.phase,
+    trailPoints: state.trailPoints.map((p) => [...p]) as Vec3[],
+    trailData: state.trailData.map((d) => ({ ...d })),
+  };
+}
+
 export const useSimulationStore = create<SimulationState>((set, get) => ({
   mode: 'VIEW',
   rcmPoint: null,
@@ -74,6 +97,10 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
   phase: Phase.IDLE,
   trailPoints: [],
   trailData: [],
+  history: [],
+  historyIndex: -1,
+  canUndo: false,
+  canRedo: false,
   isPlaying: false,
   playbackSpeed: 1,
   playbackIndex: 0,
@@ -83,7 +110,12 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
   },
 
   setRCMPoint: (rcmPoint, surfaceNormal) => {
+    const { isDraggingRCM } = get();
     set({ rcmPoint, surfaceNormal, phase: Phase.CONTACT, mode: 'EDIT' });
+    // Don't save history while dragging
+    if (!isDraggingRCM) {
+      get().saveToHistory();
+    }
   },
 
   setIsDraggingRCM: (isDraggingRCM) => {
@@ -185,6 +217,67 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
     }
   },
 
+  saveToHistory: () => {
+    const state = get();
+    const snapshot = createHistorySnapshot(state);
+
+    // Remove any future history if we're not at the end
+    const newHistory = state.history.slice(0, state.historyIndex + 1);
+    newHistory.push(snapshot);
+
+    // Limit history size
+    if (newHistory.length > MAX_HISTORY) {
+      newHistory.shift();
+    }
+
+    set({
+      history: newHistory,
+      historyIndex: newHistory.length - 1,
+      canUndo: newHistory.length > 0,
+      canRedo: false,
+    });
+  },
+
+  undo: () => {
+    const { history, historyIndex } = get();
+    if (historyIndex < 0) return;
+
+    const previousState = history[historyIndex];
+    set({
+      rcmPoint: previousState.rcmPoint,
+      surfaceNormal: previousState.surfaceNormal,
+      tiltAlpha: previousState.tiltAlpha,
+      tiltBeta: previousState.tiltBeta,
+      insertionDepth: previousState.insertionDepth,
+      phase: previousState.phase,
+      trailPoints: previousState.trailPoints,
+      trailData: previousState.trailData,
+      historyIndex: historyIndex - 1,
+      canUndo: historyIndex > 0,
+      canRedo: true,
+    });
+  },
+
+  redo: () => {
+    const { history, historyIndex } = get();
+    if (historyIndex >= history.length - 1) return;
+
+    const nextState = history[historyIndex + 1];
+    set({
+      rcmPoint: nextState.rcmPoint,
+      surfaceNormal: nextState.surfaceNormal,
+      tiltAlpha: nextState.tiltAlpha,
+      tiltBeta: nextState.tiltBeta,
+      insertionDepth: nextState.insertionDepth,
+      phase: nextState.phase,
+      trailPoints: nextState.trailPoints,
+      trailData: nextState.trailData,
+      historyIndex: historyIndex + 1,
+      canUndo: true,
+      canRedo: historyIndex + 1 < history.length - 1,
+    });
+  },
+
   reset: () => {
     set({
       mode: 'VIEW',
@@ -197,6 +290,10 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
       phase: Phase.IDLE,
       trailPoints: [],
       trailData: [],
+      history: [],
+      historyIndex: -1,
+      canUndo: false,
+      canRedo: false,
       isPlaying: false,
       playbackSpeed: 1,
       playbackIndex: 0,

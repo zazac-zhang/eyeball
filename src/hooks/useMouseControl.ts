@@ -101,11 +101,24 @@ export function useMouseControl() {
   );
 
   const handlePointerUp = useCallback(() => {
+    const store = useSimulationStore.getState();
+
     if (isDraggingRCM.current) {
       isDraggingRCM.current = false;
       setIsDraggingRCM(false);
+      // Save history after RCM drag completes
+      requestAnimationFrame(() => {
+        store.saveToHistory();
+      });
     }
-    isDragging.current = false;
+
+    if (isDragging.current) {
+      isDragging.current = false;
+      // Save history after tilt adjustment completes
+      requestAnimationFrame(() => {
+        store.saveToHistory();
+      });
+    }
   }, [setIsDraggingRCM]);
 
   const handleWheel = useCallback(

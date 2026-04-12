@@ -19,6 +19,8 @@ import { MAX_TILT_ANGLE } from '../constants';
  * Global shortcuts (any mode):
  * - Escape: Reset simulation to initial state
  * - C: Clear trails
+ * - Ctrl+Z: Undo
+ * - Ctrl+Shift+Z / Ctrl+Y: Redo
  */
 export function useKeyboardShortcuts() {
   useEffect(() => {
@@ -27,6 +29,33 @@ export function useKeyboardShortcuts() {
 
       const store = useSimulationStore.getState();
       const { mode, rcmPoint, trailData } = store;
+
+      // Undo/Redo (global, but check modifiers first)
+      if (e.key === 'z' || e.key === 'Z') {
+        if (e.ctrlKey || e.metaKey) {
+          e.preventDefault();
+          if (e.shiftKey) {
+            // Ctrl+Shift+Z = Redo
+            if (store.canRedo) {
+              store.redo();
+            }
+          } else {
+            // Ctrl+Z = Undo
+            if (store.canUndo) {
+              store.undo();
+            }
+          }
+          return;
+        }
+      }
+
+      if ((e.key === 'y' || e.key === 'Y') && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        if (store.canRedo) {
+          store.redo();
+        }
+        return;
+      }
 
       // Mode switching (works in any mode)
       switch (e.key) {
