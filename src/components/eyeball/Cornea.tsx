@@ -1,6 +1,8 @@
 import * as THREE from 'three';
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
+import { useFrame } from '@react-three/fiber';
 import { EYEBALL_RADIUS, COLORS } from '../../constants';
+import { useSimulationStore } from '../../stores/simulationStore';
 
 /**
  * Cornea: transparent spherical cap covering the front of the eyeball.
@@ -58,16 +60,34 @@ export function Cornea() {
 /**
  * Iris: the colored ring at the front of the eye, just behind the cornea surface.
  * Positioned at z = 11.5 (inside the eyeball), facing +Z.
+ *
+ * The pupil (inner circle) dynamically scales based on needle insertion depth,
+ * simulating a surgical response (deeper insertion → larger pupil).
  */
 export function Iris() {
   const IRIS_OUTER_RADIUS = EYEBALL_RADIUS * 0.38;
-  const IRIS_INNER_RADIUS = IRIS_OUTER_RADIUS * 0.35;
   const IRIS_Z = EYEBALL_RADIUS - 0.5;
+
+  const pupilMeshRef = useRef<THREE.Mesh>(null);
+  const insertionDepth = useSimulationStore((s) => s.insertionDepth);
+
+  // Animate pupil size based on insertion depth
+  useFrame(() => {
+    if (!pupilMeshRef.current) return;
+    // Pupil scales from base radius (0.35 of iris outer) up to 0.8 at max insertion
+    const baseRatio = 0.35;
+    const maxRatio = 0.8;
+    const maxDepth = 18;
+    const ratio = baseRatio + (maxRatio - baseRatio) * Math.min(insertionDepth / maxDepth, 1);
+    const targetRadius = IRIS_OUTER_RADIUS * ratio;
+    const currentScale = targetRadius / (IRIS_OUTER_RADIUS * baseRatio);
+    pupilMeshRef.current.scale.set(currentScale, currentScale, 1);
+  });
 
   return (
     <>
       <mesh position={[0, 0, IRIS_Z]} rotation={[Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[IRIS_INNER_RADIUS, IRIS_OUTER_RADIUS, 64]} />
+        <ringGeometry args={[IRIS_OUTER_RADIUS * 0.35, IRIS_OUTER_RADIUS, 64]} />
         <meshStandardMaterial
           color={COLORS.iris}
           emissive={COLORS.iris}
@@ -79,8 +99,12 @@ export function Iris() {
           depthWrite={false}
         />
       </mesh>
-      <mesh position={[0, 0, IRIS_Z - 0.02]} rotation={[Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[IRIS_INNER_RADIUS, 32]} />
+      <mesh
+        ref={pupilMeshRef}
+        position={[0, 0, IRIS_Z - 0.02]}
+        rotation={[Math.PI / 2, 0, 0]}
+      >
+        <circleGeometry args={[IRIS_OUTER_RADIUS * 0.35, 32]} />
         <meshStandardMaterial
           color="#050510"
           side={THREE.DoubleSide}

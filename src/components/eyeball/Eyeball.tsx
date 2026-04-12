@@ -1,27 +1,31 @@
-import { Sclera, EyeInterior } from './Sclera';
+import { Sclera, EyeInterior, Retina } from './Sclera';
 import { Cornea, Iris, LimbusRing } from './Cornea';
+import { TissueDeformation } from './TissueDeformation';
+import { BloodSimulation } from './BloodSimulation';
 
 /**
  * Eyeball assembly — rendered in correct z-order (back to front):
  *
  * 1. Sclera (opaque white outer shell)
- * 2. EyeInterior (dark inner sphere, BackSide — backdrop for front features)
- * 3. Iris + Pupil (colored ring at front, inside the eye)
- * 4. Cornea (transparent dome covering the front)
- * 5. LimbusRing (decorative ring at cornea-sclera boundary)
- *
- * The key insight: since all components are separate meshes (not overlapping
- * in the depth buffer except where intended), the transparent cornea renders
- * on top and the iris/pupil show through it.
+ * 2. Retina (semi-transparent inner layer)
+ * 3. EyeInterior (dark inner sphere, BackSide — backdrop for front features)
+ * 4. Iris + Pupil (colored ring at front, inside the eye)
+ * 5. Cornea (transparent dome covering the front)
+ * 6. LimbusRing (decorative ring at cornea-sclera boundary)
+ * 7. TissueDeformation (indentation indicator at RCM point)
+ * 8. BloodSimulation (particle-based bleeding effect)
  */
 export function Eyeball() {
   return (
     <group position={[0, 0, 0]}>
       <Sclera />
+      <Retina />
       <EyeInterior />
       <Iris />
       <Cornea />
       <LimbusRing />
+      <TissueDeformation />
+      <BloodSimulation />
     </group>
   );
 }

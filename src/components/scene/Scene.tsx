@@ -15,12 +15,16 @@ import { ScleraClickHandler } from './ScleraClickHandler';
 import { useTrajectoryRecorder } from '../../hooks/useTrajectory';
 import { useTouchPinch } from '../../hooks/useTouchPinch';
 import { useChartDataCollector } from '../../hooks/useChartDataCollector';
+import { useAutoPhaseTransition } from '../../hooks/useAutoPhaseTransition';
+import { usePhaseTransitionSound } from '../../hooks/usePhaseTransition';
 import { useSimulationStore } from '../../stores/simulationStore';
 
 export function Scene() {
   useTrajectoryRecorder();
   useTouchPinch();
   useChartDataCollector();
+  useAutoPhaseTransition();
+  usePhaseTransitionSound();
   const mode = useSimulationStore((s) => s.mode);
 
   return (

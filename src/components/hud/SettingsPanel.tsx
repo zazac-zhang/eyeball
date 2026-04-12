@@ -1,9 +1,81 @@
-import { useState } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useSimulationStore } from '../../stores/simulationStore';
 import { useThemeStore } from '../../stores/themeStore';
+import { useKeyBindingsStore, DEFAULT_KEYBINDINGS } from '../../stores/keyBindingsStore';
+import type { KeyBindings } from '../../stores/keyBindingsStore';
 
 interface SettingsPanelProps {
   onClose: () => void;
+}
+
+const ACTION_LABELS: Record<keyof KeyBindings, string> = {
+  modeView: 'VIEW Mode',
+  modePlace: 'PLACE Mode',
+  modeEdit: 'EDIT Mode',
+  modeReplay: 'REPLAY Mode',
+  insertUp: 'Insert (depth +)',
+  withdrawDown: 'Withdraw (depth −)',
+  rotateLeft: 'Rotate Left',
+  rotateRight: 'Rotate Right',
+  preset1: 'Preset 0°',
+  preset2: 'Preset 15°',
+  preset3: 'Preset 30°',
+  preset4: 'Preset 45°',
+  reset: 'Reset Simulation',
+  clearTrails: 'Clear Trails',
+  undo: 'Undo',
+  redo: 'Redo',
+};
+
+function KeyBindingRow({ bindingKey }: { bindingKey: keyof KeyBindings }) {
+  const keyBindings = useKeyBindingsStore((s) => s.keyBindings);
+  const setKeyBinding = useKeyBindingsStore((s) => s.setKeyBinding);
+  const currentKey = keyBindings[bindingKey];
+  const [isListening, setIsListening] = useState(false);
+  const rowRef = useRef<HTMLDivElement>(null);
+
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const key = e.key === ' ' ? ' ' : e.key;
+    setKeyBinding(bindingKey, key);
+    setIsListening(false);
+  }, [bindingKey, setKeyBinding]);
+
+  useEffect(() => {
+    if (isListening) {
+      window.addEventListener('keydown', handleKeyDown);
+      return () => { window.removeEventListener('keydown', handleKeyDown); };
+    }
+  }, [isListening, handleKeyDown]);
+
+  // Click outside to cancel listening
+  useEffect(() => {
+    if (!isListening) return;
+    const handleClick = (e: MouseEvent) => {
+      if (rowRef.current && !rowRef.current.contains(e.target as Node)) {
+        setIsListening(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => { document.removeEventListener('mousedown', handleClick); };
+  }, [isListening]);
+
+  return (
+    <div ref={rowRef} className="flex items-center justify-between py-1.5">
+      <span className="text-xs text-blue-200/80">{ACTION_LABELS[bindingKey]}</span>
+      <button
+        onClick={() => { setIsListening(!isListening); }}
+        className={`min-w-[60px] rounded border px-2 py-1 text-xs font-mono transition-all ${
+          isListening
+            ? 'border-amber-500/60 bg-amber-500/20 text-amber-300 animate-pulse'
+            : 'border-blue-500/20 bg-blue-500/10 text-blue-200 hover:border-blue-500/40 hover:bg-blue-500/20'
+        }`}
+      >
+        {isListening ? '...' : currentKey}
+      </button>
+    </div>
+  );
 }
 
 export function SettingsPanel({ onClose }: SettingsPanelProps) {
@@ -11,10 +83,12 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
   const [lightIntensity, setLightIntensity] = useState(1.0);
   const [showSafetyCone, setShowSafetyCone] = useState(true);
   const [showNormalIndicator, setShowNormalIndicator] = useState(true);
+  const [showKeybindings, setShowKeybindings] = useState(false);
 
   const mode = useSimulationStore((s) => s.mode);
   const theme = useThemeStore((s) => s.theme);
   const setTheme = useThemeStore((s) => s.setTheme);
+  const resetKeyBindings = useKeyBindingsStore((s) => s.resetKeyBindings);
 
   return (
     <div className="pointer-events-auto fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -126,6 +200,35 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
               />
               <span className="text-sm text-blue-200">Show Normal Indicator</span>
             </label>
+          </div>
+
+          {/* Keyboard Shortcuts */}
+          <div>
+            <button
+              onClick={() => { setShowKeybindings(!showKeybindings); }}
+              className="flex w-full items-center justify-between rounded border border-blue-500/15 bg-blue-500/5 px-3 py-2 text-sm text-blue-100 hover:bg-blue-500/10"
+            >
+              <span>Keyboard Shortcuts</span>
+              <span className="text-xs text-blue-300/60">{showKeybindings ? '▾' : '▸'}</span>
+            </button>
+            {showKeybindings && (
+              <div className="mt-2 rounded border border-blue-500/15 bg-blue-500/5 px-3 py-2">
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="text-xs text-blue-300/60">Click a key to remap</span>
+                  <button
+                    onClick={resetKeyBindings}
+                    className="rounded border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-300/80 hover:bg-amber-500/20"
+                  >
+                    Reset Defaults
+                  </button>
+                </div>
+                <div className="divide-y divide-blue-500/10">
+                  {(Object.keys(DEFAULT_KEYBINDINGS) as Array<keyof KeyBindings>).map((key) => (
+                    <KeyBindingRow key={key} bindingKey={key} />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Info */}

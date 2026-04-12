@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import * as THREE from 'three';
 import { COLORS } from '../../constants';
+import { useForceFeedback } from '../../hooks/useForceFeedback';
 
 interface NeedleTipProps {
   position: [number, number, number];
@@ -15,14 +16,16 @@ export function NeedleTip({ position }: NeedleTipProps) {
     return geo;
   }, []);
 
+  const { force, color } = useForceFeedback();
+
   return (
     <mesh geometry={geometry} position={position}>
       <meshStandardMaterial
-        color={COLORS.needleTip}
+        color={force > 0.01 ? color : COLORS.needleTip}
         metalness={0.9}
         roughness={0.1}
-        emissive={COLORS.needleTip}
-        emissiveIntensity={0.1}
+        emissive={force > 0.01 ? color : COLORS.needleTip}
+        emissiveIntensity={0.1 + force * 0.5}
       />
     </mesh>
   );
