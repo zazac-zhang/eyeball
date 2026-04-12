@@ -5,6 +5,7 @@ import { ControlPanel } from './components/hud/ControlPanel';
 import { ModePanel } from './components/hud/ModePanel';
 import { RCMPointList } from './components/hud/RCMPointList';
 import { RealTimeChart } from './components/hud/RealTimeChart';
+import { MiniMap } from './components/hud/MiniMap';
 import { useThemeStore } from './stores/themeStore';
 import './index.css';
 
@@ -31,6 +32,9 @@ function App() {
         </div>
       </div>
       <RCMPointList />
+      <div className="pointer-events-none absolute bottom-4 left-4">
+        <MiniMap />
+      </div>
       <RealTimeChart />
     </div>
   );
