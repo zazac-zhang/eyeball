@@ -32,8 +32,8 @@ export interface TrailPoint {
 
 export interface SimulationState {
   mode: SimulationMode;
-  rcmPoint: Vec3 | null;
-  surfaceNormal: Vec3 | null;
+  rcmPoints: Array<{ point: Vec3; normal: Vec3; id: string }>;
+  currentRCMIndex: number;
   tiltAlpha: number;
   tiltBeta: number;
   insertionDepth: number;

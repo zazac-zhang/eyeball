@@ -3,6 +3,7 @@ import { Scene } from './components/scene/Scene';
 import { KinematicsPanel } from './components/hud/KinematicsPanel';
 import { ControlPanel } from './components/hud/ControlPanel';
 import { ModePanel } from './components/hud/ModePanel';
+import { RCMPointList } from './components/hud/RCMPointList';
 import { useThemeStore } from './stores/themeStore';
 import './index.css';
 
@@ -28,6 +29,7 @@ function App() {
           <ControlPanel />
         </div>
       </div>
+      <RCMPointList />
     </div>
   );
 }

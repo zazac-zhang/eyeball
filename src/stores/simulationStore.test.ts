@@ -6,10 +6,10 @@ beforeEach(() => {
   useSimulationStore.getState().reset();
 });
 
-describe('setRCMPoint', () => {
+describe('addRCMPoint', () => {
   test('transitions from IDLE to CONTACT', () => {
     expect(useSimulationStore.getState().phase).toBe(SurgicalPhase.IDLE);
-    useSimulationStore.getState().setRCMPoint([0, 0, 12], [0, 0, 1]);
+    useSimulationStore.getState().addRCMPoint([0, 0, 12], [0, 0, 1]);
     expect(useSimulationStore.getState().phase).toBe(SurgicalPhase.CONTACT);
     expect(useSimulationStore.getState().rcmPoint).toEqual([0, 0, 12]);
   });
@@ -17,7 +17,7 @@ describe('setRCMPoint', () => {
 
 describe('setTiltAngles', () => {
   test('transitions from CONTACT to INSERTING', () => {
-    useSimulationStore.getState().setRCMPoint([0, 0, 12], [0, 0, 1]);
+    useSimulationStore.getState().addRCMPoint([0, 0, 12], [0, 0, 1]);
     useSimulationStore.getState().setTiltAngles(0.1, 0.2);
     expect(useSimulationStore.getState().phase).toBe(SurgicalPhase.INSERTING);
   });
@@ -50,14 +50,14 @@ describe('setInsertionDepth', () => {
   });
 
   test('transitions CONTACT to INSERTING when depth > 0', () => {
-    useSimulationStore.getState().setRCMPoint([0, 0, 12], [0, 0, 1]);
+    useSimulationStore.getState().addRCMPoint([0, 0, 12], [0, 0, 1]);
     expect(useSimulationStore.getState().phase).toBe(SurgicalPhase.CONTACT);
     useSimulationStore.getState().setInsertionDepth(5);
     expect(useSimulationStore.getState().phase).toBe(SurgicalPhase.INSERTING);
   });
 
   test('transitions INSERTING to WITHDRAWING when depth goes to 0', () => {
-    useSimulationStore.getState().setRCMPoint([0, 0, 12], [0, 0, 1]);
+    useSimulationStore.getState().addRCMPoint([0, 0, 12], [0, 0, 1]);
     useSimulationStore.getState().setTiltAngles(0, 0);
     useSimulationStore.getState().setInsertionDepth(10);
     expect(useSimulationStore.getState().phase).toBe(SurgicalPhase.INSERTING);
@@ -78,7 +78,7 @@ describe('setInsertionDepth', () => {
 
 describe('reset', () => {
   test('returns all state to initial values', () => {
-    useSimulationStore.getState().setRCMPoint([0, 0, 12], [0, 0, 1]);
+    useSimulationStore.getState().addRCMPoint([0, 0, 12], [0, 0, 1]);
     useSimulationStore.getState().setTiltAngles(0.1, 0.2);
     useSimulationStore.getState().setInsertionDepth(10);
     useSimulationStore.getState().reset();
@@ -151,9 +151,9 @@ describe('mode', () => {
     expect(useSimulationStore.getState().mode).toBe('REPLAY');
   });
 
-  test('setRCMPoint auto-transitions to EDIT mode', () => {
+  test('addRCMPoint auto-transitions to EDIT mode', () => {
     useSimulationStore.getState().setMode('PLACE');
-    useSimulationStore.getState().setRCMPoint([0, 0, 12], [0, 0, 1]);
+    useSimulationStore.getState().addRCMPoint([0, 0, 12], [0, 0, 1]);
     expect(useSimulationStore.getState().mode).toBe('EDIT');
   });
 

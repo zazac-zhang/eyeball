@@ -7,14 +7,24 @@ import { MAX_INSERTION_DEPTH, MAX_TILT_ANGLE } from '../constants';
 const MAX_TRAIL_POINTS = 5000;
 const MAX_HISTORY = 50;
 
+export interface RCMPoint {
+  id: string;
+  point: Vec3;
+  normal: Vec3;
+}
+
 export interface SimulationState {
   // Mode
   mode: SimulationMode;
 
-  // RCM configuration
+  // RCM configuration (multiple points support)
+  rcmPoints: RCMPoint[];
+  currentRCMIndex: number;
+  isDraggingRCM: boolean;
+
+  // Computed values for backward compatibility
   rcmPoint: Vec3 | null;
   surfaceNormal: Vec3 | null;
-  isDraggingRCM: boolean;
 
   // Needle parameters
   tiltAlpha: number;
@@ -41,7 +51,10 @@ export interface SimulationState {
 
   // Actions
   setMode: (mode: SimulationMode) => void;
-  setRCMPoint: (rcmPoint: Vec3, surfaceNormal: Vec3) => void;
+  addRCMPoint: (point: Vec3, normal: Vec3) => void;
+  removeRCMPoint: (index: number) => void;
+  setCurrentRCMIndex: (index: number) => void;
+  updateRCMPoint: (index: number, point: Vec3, normal: Vec3) => void;
   setIsDraggingRCM: (isDragging: boolean) => void;
   setTiltAngles: (alpha: number, beta: number) => void;
   setInsertionDepth: (depth: number) => void;
@@ -61,22 +74,27 @@ export interface SimulationState {
   redo: () => void;
 }
 
-function getRCMConfig(
-  state: Pick<SimulationState, 'rcmPoint' | 'surfaceNormal'>
-): RCMConfig | null {
-  if (!state.rcmPoint || !state.surfaceNormal) return null;
+function getRCMConfig(state: SimulationState): RCMConfig | null {
+  const currentRCM = state.rcmPoints[state.currentRCMIndex];
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  if (!currentRCM) {
+    return null;
+  }
   return {
-    rcmPoint: state.rcmPoint,
-    surfaceNormal: state.surfaceNormal,
+    rcmPoint: currentRCM.point,
+    surfaceNormal: currentRCM.normal,
     maxInsertionDepth: MAX_INSERTION_DEPTH,
     maxTiltAngle: MAX_TILT_ANGLE,
   };
 }
 
 function createHistorySnapshot(state: SimulationState): HistoryState {
+  const currentRCM = state.rcmPoints[state.currentRCMIndex];
   return {
-    rcmPoint: state.rcmPoint ? [...state.rcmPoint] : null,
-    surfaceNormal: state.surfaceNormal ? [...state.surfaceNormal] : null,
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    rcmPoint: currentRCM ? [...currentRCM.point] : null,
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    surfaceNormal: currentRCM ? [...currentRCM.normal] : null,
     tiltAlpha: state.tiltAlpha,
     tiltBeta: state.tiltBeta,
     insertionDepth: state.insertionDepth,
@@ -91,9 +109,11 @@ function createHistorySnapshot(state: SimulationState): HistoryState {
 
 export const useSimulationStore = create<SimulationState>((set, get) => ({
   mode: 'VIEW',
+  rcmPoints: [],
+  currentRCMIndex: -1,
+  isDraggingRCM: false,
   rcmPoint: null,
   surfaceNormal: null,
-  isDraggingRCM: false,
   tiltAlpha: 0,
   tiltBeta: 0,
   insertionDepth: 0,
@@ -112,13 +132,76 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
     set({ mode });
   },
 
-  setRCMPoint: (rcmPoint, surfaceNormal) => {
+  addRCMPoint: (point, normal) => {
     const { isDraggingRCM } = get();
-    set({ rcmPoint, surfaceNormal, phase: Phase.CONTACT, mode: 'EDIT' });
+    const newRCM: RCMPoint = {
+      id: `rcm-${String(Date.now())}`,
+      point,
+      normal,
+    };
+    set((state) => {
+      const newPhase = Phase.CONTACT;
+      const newMode: SimulationMode = 'EDIT';
+      const newState = {
+        rcmPoints: [...state.rcmPoints, newRCM],
+        currentRCMIndex: state.rcmPoints.length,
+        phase: newPhase,
+        mode: newMode,
+        rcmPoint: point,
+        surfaceNormal: normal,
+      };
+      return newState;
+    });
     // Don't save history while dragging
     if (!isDraggingRCM) {
       get().saveToHistory();
     }
+  },
+
+  removeRCMPoint: (index) => {
+    set((state) => {
+      const newRCMPoints = state.rcmPoints.filter((_, i) => i !== index);
+      const newCurrentIndex = state.currentRCMIndex === index ? -1 :
+                            state.currentRCMIndex > index ? state.currentRCMIndex - 1 :
+                            state.currentRCMIndex;
+      const finalIndex = Math.min(newCurrentIndex, newRCMPoints.length - 1);
+      const currentRCM = newRCMPoints[finalIndex];
+      return {
+        rcmPoints: newRCMPoints,
+        currentRCMIndex: finalIndex,
+        phase: newRCMPoints.length === 0 ? Phase.IDLE : state.phase,
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        rcmPoint: currentRCM ? currentRCM.point : null,
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        surfaceNormal: currentRCM ? currentRCM.normal : null,
+      };
+    });
+  },
+
+  setCurrentRCMIndex: (index) => {
+    set((state) => {
+      const currentRCM = state.rcmPoints[index];
+      return {
+        currentRCMIndex: index,
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        rcmPoint: currentRCM ? currentRCM.point : null,
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        surfaceNormal: currentRCM ? currentRCM.normal : null,
+      };
+    });
+  },
+
+  updateRCMPoint: (index, point, normal) => {
+    set((state) => {
+      const newRCMPoints = [...state.rcmPoints];
+      newRCMPoints[index] = { ...newRCMPoints[index], point, normal };
+      const isCurrent = state.currentRCMIndex === index;
+      return {
+        rcmPoints: newRCMPoints,
+        rcmPoint: isCurrent ? point : state.rcmPoint,
+        surfaceNormal: isCurrent ? normal : state.surfaceNormal,
+      };
+    });
   },
 
   setIsDraggingRCM: (isDraggingRCM) => {
@@ -290,9 +373,11 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
   reset: () => {
     set({
       mode: 'VIEW',
+      rcmPoints: [],
+      currentRCMIndex: -1,
+      isDraggingRCM: false,
       rcmPoint: null,
       surfaceNormal: null,
-      isDraggingRCM: false,
       tiltAlpha: 0,
       tiltBeta: 0,
       insertionDepth: 0,

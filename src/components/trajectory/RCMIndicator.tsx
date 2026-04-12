@@ -1,32 +1,57 @@
-import { useRef, useMemo } from 'react';
+import { useMemo } from 'react';
 import * as THREE from 'three';
 import { useSimulationStore } from '../../stores/simulationStore';
 import { COLORS } from '../../constants';
 
 export function RCMIndicator() {
-  const rcmPoint = useSimulationStore((s) => s.rcmPoint);
+  const rcmPoints = useSimulationStore((s) => s.rcmPoints);
+  const currentRCMIndex = useSimulationStore((s) => s.currentRCMIndex);
   const isDraggingRCM = useSimulationStore((s) => s.isDraggingRCM);
-  const meshRef = useRef<THREE.Mesh>(null);
 
-  const geometry = useMemo(() => {
-    return new THREE.SphereGeometry(isDraggingRCM ? 0.5 : 0.3, 16, 16);
-  }, [isDraggingRCM]);
+  const geometries = useMemo(() => {
+    return rcmPoints.map((_, index) => {
+      const isCurrent = index === currentRCMIndex;
+      const radius = isCurrent ? (isDraggingRCM ? 0.5 : 0.3) : 0.2;
+      return new THREE.SphereGeometry(radius, 16, 16);
+    });
+  }, [rcmPoints, currentRCMIndex, isDraggingRCM]);
 
-  if (!rcmPoint) return null;
+  if (rcmPoints.length === 0) return null;
 
   return (
-    <mesh
-      ref={meshRef}
-      geometry={geometry}
-      position={new THREE.Vector3(rcmPoint[0], rcmPoint[1], rcmPoint[2])}
-    >
-      <meshStandardMaterial
-        color={isDraggingRCM ? '#ffaa00' : COLORS.rcmIndicator}
-        emissive={isDraggingRCM ? '#ffaa00' : COLORS.rcmIndicator}
-        emissiveIntensity={isDraggingRCM ? 1.2 : 0.8}
-        transparent
-        opacity={isDraggingRCM ? 1.0 : 0.9}
-      />
-    </mesh>
+    <>
+      {rcmPoints.map((rcm, index) => {
+        const isCurrent = index === currentRCMIndex;
+        const position = new THREE.Vector3(rcm.point[0], rcm.point[1], rcm.point[2]);
+
+        return (
+          <mesh
+            key={rcm.id}
+            geometry={geometries[index]}
+            position={position}
+          >
+            <meshStandardMaterial
+              color={
+                isDraggingRCM && isCurrent
+                  ? '#ffaa00'
+                  : isCurrent
+                    ? COLORS.rcmIndicator
+                    : '#4488ff'
+              }
+              emissive={
+                isDraggingRCM && isCurrent
+                  ? '#ffaa00'
+                  : isCurrent
+                    ? COLORS.rcmIndicator
+                    : '#4488ff'
+              }
+              emissiveIntensity={isCurrent ? (isDraggingRCM ? 1.2 : 0.8) : 0.4}
+              transparent
+              opacity={isCurrent ? (isDraggingRCM ? 1.0 : 0.9) : 0.6}
+            />
+          </mesh>
+        );
+      })}
+    </>
   );
 }
