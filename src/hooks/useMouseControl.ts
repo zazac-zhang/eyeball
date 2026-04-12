@@ -1,4 +1,4 @@
-import { useRef, useCallback } from 'react';
+import { useRef } from 'react';
 import { type ThreeEvent } from '@react-three/fiber';
 import { useSimulationStore } from '../stores/simulationStore';
 import { computeRCMFromRay } from '../lib/rcm';
@@ -31,80 +31,71 @@ export function useMouseControl() {
   const rcmPointSet = !!rcmPoint;
   const currentRCMIndex = useSimulationStore((s) => s.currentRCMIndex);
 
-  const handleClick = useCallback(
-    (e: ThreeEvent<MouseEvent>) => {
-      if (mode !== 'PLACE') return;
+  function handleClick(e: ThreeEvent<MouseEvent>) {
+    if (mode !== 'PLACE') return;
 
+    const rayOrigin: Vec3 = [e.ray.origin.x, e.ray.origin.y, e.ray.origin.z];
+    const rayDir: Vec3 = [e.ray.direction.x, e.ray.direction.y, e.ray.direction.z];
+    const result = computeRCMFromRay(rayOrigin, rayDir, [0, 0, 0], EYEBALL_RADIUS);
+    if (!result) return;
+
+    e.stopPropagation();
+    logAction('RCM_PLACED', {
+      point: result.rcmPoint,
+      normal: result.surfaceNormal,
+    });
+    addRCMPoint(result.rcmPoint, result.surfaceNormal);
+  }
+
+  function handlePointerDown(e: ThreeEvent<PointerEvent>) {
+    // EDIT mode: drag to adjust tilt angles
+    if (mode === 'EDIT' && rcmPointSet && e.button === 0) {
+      isDragging.current = true;
+      lastMouse.current = { x: e.clientX, y: e.clientY };
+      return;
+    }
+
+    // PLACE mode with existing RCM: start dragging RCM point
+    if (mode === 'PLACE' && rcmPointSet && e.button === 0) {
+      isDraggingRCM.current = true;
+      setIsDraggingRCM(true);
+      lastMouse.current = { x: e.clientX, y: e.clientY };
+      e.stopPropagation();
+      return;
+    }
+  }
+
+  function handlePointerMove(e: ThreeEvent<PointerEvent>) {
+    // EDIT mode: dragging adjusts tilt angles
+    if (mode === 'EDIT' && isDragging.current && rcmPointSet) {
+      const dx = e.clientX - lastMouse.current.x;
+      const dy = e.clientY - lastMouse.current.y;
+      lastMouse.current = { x: e.clientX, y: e.clientY };
+
+      const sensitivity = 0.005;
+      const newBeta = tiltBeta + dx * sensitivity;
+      const newAlpha = Math.max(
+        -MAX_TILT_ANGLE,
+        Math.min(MAX_TILT_ANGLE, tiltAlpha + dy * sensitivity)
+      );
+      setTiltAngles(newAlpha, newBeta);
+      return;
+    }
+
+    // PLACE mode: dragging moves RCM point
+    if (mode === 'PLACE' && isDraggingRCM.current) {
+      e.stopPropagation();
       const rayOrigin: Vec3 = [e.ray.origin.x, e.ray.origin.y, e.ray.origin.z];
       const rayDir: Vec3 = [e.ray.direction.x, e.ray.direction.y, e.ray.direction.z];
       const result = computeRCMFromRay(rayOrigin, rayDir, [0, 0, 0], EYEBALL_RADIUS);
-      if (!result) return;
-
-      e.stopPropagation();
-      logAction('RCM_PLACED', {
-        point: result.rcmPoint,
-        normal: result.surfaceNormal,
-      });
-      addRCMPoint(result.rcmPoint, result.surfaceNormal);
-    },
-    [mode, addRCMPoint]
-  );
-
-  const handlePointerDown = useCallback(
-    (e: ThreeEvent<PointerEvent>) => {
-      // EDIT mode: drag to adjust tilt angles
-      if (mode === 'EDIT' && rcmPointSet && e.button === 0) {
-        isDragging.current = true;
-        lastMouse.current = { x: e.clientX, y: e.clientY };
-        return;
+      if (result) {
+        updateRCMPoint(currentRCMIndex, result.rcmPoint, result.surfaceNormal);
       }
+      return;
+    }
+  }
 
-      // PLACE mode with existing RCM: start dragging RCM point
-      if (mode === 'PLACE' && rcmPointSet && e.button === 0) {
-        isDraggingRCM.current = true;
-        setIsDraggingRCM(true);
-        lastMouse.current = { x: e.clientX, y: e.clientY };
-        e.stopPropagation();
-        return;
-      }
-    },
-    [mode, rcmPointSet, setIsDraggingRCM]
-  );
-
-  const handlePointerMove = useCallback(
-    (e: ThreeEvent<PointerEvent>) => {
-      // EDIT mode: dragging adjusts tilt angles
-      if (mode === 'EDIT' && isDragging.current && rcmPointSet) {
-        const dx = e.clientX - lastMouse.current.x;
-        const dy = e.clientY - lastMouse.current.y;
-        lastMouse.current = { x: e.clientX, y: e.clientY };
-
-        const sensitivity = 0.005;
-        const newBeta = tiltBeta + dx * sensitivity;
-        const newAlpha = Math.max(
-          -MAX_TILT_ANGLE,
-          Math.min(MAX_TILT_ANGLE, tiltAlpha + dy * sensitivity)
-        );
-        setTiltAngles(newAlpha, newBeta);
-        return;
-      }
-
-      // PLACE mode: dragging moves RCM point
-      if (mode === 'PLACE' && isDraggingRCM.current) {
-        e.stopPropagation();
-        const rayOrigin: Vec3 = [e.ray.origin.x, e.ray.origin.y, e.ray.origin.z];
-        const rayDir: Vec3 = [e.ray.direction.x, e.ray.direction.y, e.ray.direction.z];
-        const result = computeRCMFromRay(rayOrigin, rayDir, [0, 0, 0], EYEBALL_RADIUS);
-        if (result) {
-          updateRCMPoint(currentRCMIndex, result.rcmPoint, result.surfaceNormal);
-        }
-        return;
-      }
-    },
-    [mode, rcmPointSet, tiltAlpha, tiltBeta, setTiltAngles, updateRCMPoint, currentRCMIndex]
-  );
-
-  const handlePointerUp = useCallback(() => {
+  function handlePointerUp() {
     const store = useSimulationStore.getState();
 
     if (isDraggingRCM.current) {
@@ -123,18 +114,15 @@ export function useMouseControl() {
         store.saveToHistory();
       });
     }
-  }, [setIsDraggingRCM]);
+  }
 
-  const handleWheel = useCallback(
-    (e: ThreeEvent<WheelEvent>) => {
-      if (mode !== 'EDIT' || !rcmPointSet) return;
-      e.stopPropagation();
-      const delta = e.deltaY > 0 ? -0.5 : 0.5;
-      const current = useSimulationStore.getState().insertionDepth;
-      setInsertionDepth(Math.max(0, Math.min(current + delta, MAX_INSERTION_DEPTH)));
-    },
-    [mode, rcmPointSet, setInsertionDepth]
-  );
+  function handleWheel(e: ThreeEvent<WheelEvent>) {
+    if (mode !== 'EDIT' || !rcmPointSet) return;
+    e.stopPropagation();
+    const delta = e.deltaY > 0 ? -0.5 : 0.5;
+    const current = useSimulationStore.getState().insertionDepth;
+    setInsertionDepth(Math.max(0, Math.min(current + delta, MAX_INSERTION_DEPTH)));
+  }
 
   return { handleClick, handlePointerDown, handlePointerMove, handlePointerUp, handleWheel };
 }

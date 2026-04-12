@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useSimulationStore } from '../../stores/simulationStore';
 import { useThemeStore } from '../../stores/themeStore';
 import { useKeyBindingsStore, DEFAULT_KEYBINDINGS } from '../../stores/keyBindingsStore';
@@ -34,25 +34,22 @@ function KeyBindingRow({ bindingKey }: { bindingKey: keyof KeyBindings }) {
   const [isListening, setIsListening] = useState(false);
   const rowRef = useRef<HTMLDivElement>(null);
 
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const key = e.key === ' ' ? ' ' : e.key;
-    setKeyBinding(bindingKey, key);
-    setIsListening(false);
-  }, [bindingKey, setKeyBinding]);
-
-  useEffect(() => {
-    if (isListening) {
-      window.addEventListener('keydown', handleKeyDown);
-      return () => { window.removeEventListener('keydown', handleKeyDown); };
-    }
-  }, [isListening, handleKeyDown]);
-
-  // Click outside to cancel listening
   useEffect(() => {
     if (!isListening) return;
-    const handleClick = (e: MouseEvent) => {
+    function handleKeyDown(e: KeyboardEvent) {
+      e.preventDefault();
+      e.stopPropagation();
+      const key = e.key === ' ' ? ' ' : e.key;
+      setKeyBinding(bindingKey, key);
+      setIsListening(false);
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => { window.removeEventListener('keydown', handleKeyDown); };
+  }, [isListening, bindingKey, setKeyBinding]);
+
+  useEffect(() => {
+    if (!isListening) return;
+    function handleClick(e: MouseEvent) {
       if (rowRef.current && !rowRef.current.contains(e.target as Node)) {
         setIsListening(false);
       }
@@ -112,9 +109,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
             </div>
             <div className="flex gap-2">
               <button
-                onClick={() => {
-                  setTheme('dark');
-                }}
+                onClick={() => { setTheme('dark'); }}
                 className={`rounded border px-3 py-1.5 text-xs transition-all ${
                   theme === 'dark'
                     ? 'border-blue-500/60 bg-blue-500/30 text-blue-100'
@@ -124,9 +119,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
                 🌙 Dark
               </button>
               <button
-                onClick={() => {
-                  setTheme('light');
-                }}
+                onClick={() => { setTheme('light'); }}
                 className={`rounded border px-3 py-1.5 text-xs transition-all ${
                   theme === 'light'
                     ? 'border-amber-500/60 bg-amber-500/30 text-amber-100'

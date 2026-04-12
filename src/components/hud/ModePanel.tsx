@@ -1,4 +1,3 @@
-import { useCallback } from 'react';
 import { useSimulationStore } from '../../stores/simulationStore';
 import type { SimulationMode } from '../../types';
 
@@ -52,21 +51,14 @@ export function ModePanel() {
   const trailData = useSimulationStore((s) => s.trailData);
   const setMode = useSimulationStore((s) => s.setMode);
 
-  const isDisabled = useCallback(
-    (m: SimulationMode) => {
-      if (m === 'PLACE' && rcmPoint) return true;
-      if (m === 'EDIT' && !rcmPoint) return true;
-      if (m === 'REPLAY' && trailData.length === 0) return true;
-      return false;
-    },
-    [rcmPoint, trailData.length]
-  );
-
   return (
     <div className="pointer-events-auto flex items-center gap-1 rounded-lg border border-blue-500/30 bg-gray-950/85 px-1 py-0.5 backdrop-blur-sm sm:px-1.5 sm:py-1">
       {MODES.map(({ mode: m, label, shortcut, activeBg, activeBorder, activeText }) => {
         const isActive = mode === m;
-        const disabled = isDisabled(m);
+        const disabled =
+          (m === 'PLACE' && !!rcmPoint) ||
+          (m === 'EDIT' && !rcmPoint) ||
+          (m === 'REPLAY' && trailData.length === 0);
 
         return (
           <button

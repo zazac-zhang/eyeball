@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useSimulationStore } from '../../stores/simulationStore';
 import { MAX_INSERTION_DEPTH, MAX_TILT_ANGLE } from '../../constants';
 import { exportTrailJSON, importTrailJSON, createScreenRecorder } from '../../lib/export';
@@ -56,7 +56,7 @@ export function ControlPanel() {
   const redo = useSimulationStore((s) => s.redo);
   const { exportLog, clearLog } = useActionLogger();
 
-  const handleExportLog = useCallback(() => {
+  function handleExportLog() {
     const blob = new Blob([exportLog()], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -64,31 +64,28 @@ export function ControlPanel() {
     a.download = 'eyeball-action-log.json';
     a.click();
     URL.revokeObjectURL(url);
-  }, [exportLog]);
+  }
 
-  const handleClearLog = useCallback(() => {
+  function handleClearLog() {
     clearLog();
-  }, [clearLog]);
+  }
 
-  const handleExport = useCallback(() => {
+  function handleExport() {
     exportTrailJSON(trailData);
-  }, [trailData]);
+  }
 
-  const handleImport = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-      void (async () => {
-        const data = await importTrailJSON(file);
-        if (data) {
-          importTrailData(data.trailPoints);
-        }
-      })();
-    },
-    [importTrailData]
-  );
+  function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    void (async () => {
+      const data = await importTrailJSON(file);
+      if (data) {
+        importTrailData(data.trailPoints);
+      }
+    })();
+  }
 
-  const handleScreenshot = useCallback(() => {
+  function handleScreenshot() {
     const canvas = document.querySelector<HTMLCanvasElement>('canvas');
     if (!canvas) return;
     canvas.toBlob((blob) => {
@@ -100,7 +97,7 @@ export function ControlPanel() {
       a.click();
       URL.revokeObjectURL(url);
     }, 'image/png');
-  }, []);
+  }
 
   useEffect(() => {
     const canvas = document.querySelector<HTMLCanvasElement>('canvas');
@@ -110,7 +107,7 @@ export function ControlPanel() {
     });
   }, []);
 
-  const handleToggleRecording = useCallback(() => {
+  function handleToggleRecording() {
     if (!recorder) return;
     if (recorder.isRecording()) {
       recorder.stop();
@@ -119,7 +116,7 @@ export function ControlPanel() {
       recorder.start();
       setIsRecording(true);
     }
-  }, [recorder]);
+  }
 
   const isEditMode = mode === 'EDIT';
   const isReplayMode = mode === 'REPLAY';
@@ -180,7 +177,7 @@ export function ControlPanel() {
                 step={0.5}
                 value={[tiltAlpha * (180 / Math.PI)]}
                 onValueChange={([v]) => {
-                  setTiltAngles((v ?? 0) * (Math.PI / 180), tiltBeta);
+                  setTiltAngles(v * (Math.PI / 180), tiltBeta);
                 }}
               />
             </div>
@@ -195,7 +192,7 @@ export function ControlPanel() {
                 step={0.5}
                 value={[tiltBeta * (180 / Math.PI)]}
                 onValueChange={([v]) => {
-                  setTiltAngles(tiltAlpha, (v ?? 0) * (Math.PI / 180));
+                  setTiltAngles(tiltAlpha, v * (Math.PI / 180));
                 }}
               />
             </div>
@@ -211,7 +208,7 @@ export function ControlPanel() {
                 step={0.1}
                 value={[insertionDepth]}
                 onValueChange={([v]) => {
-                  setInsertionDepth(v ?? 0);
+                  setInsertionDepth(v);
                 }}
               />
             </div>
@@ -276,7 +273,7 @@ export function ControlPanel() {
                 step={0.5}
                 value={[playbackSpeed]}
                 onValueChange={([v]) => {
-                  setPlaybackSpeed(v ?? 1);
+                  setPlaybackSpeed(v);
                 }}
               />
             </div>

@@ -1,4 +1,4 @@
-import { useRef, useCallback } from 'react';
+import { useRef } from 'react';
 
 export type LogEntry = {
   timestamp: number;
@@ -21,7 +21,6 @@ class ActionLogger {
     if (this.entries.length > MAX_LOG_ENTRIES) {
       this.entries.shift();
     }
-    // eslint-disable-next-line no-console
     console.log(
       `[Action] %c${action}`,
       'color: #4488ff; font-weight: bold',
@@ -47,13 +46,21 @@ const globalLogger = new ActionLogger();
 export function useActionLogger() {
   const loggerRef = useRef(globalLogger);
 
-  const log = useCallback((action: string, details?: Record<string, unknown>) => {
+  function log(action: string, details?: Record<string, unknown>) {
     loggerRef.current.log(action, details);
-  }, []);
+  }
 
-  const getLog = useCallback(() => loggerRef.current.getEntries(), []);
-  const clearLog = useCallback(() => loggerRef.current.clear(), []);
-  const exportLog = useCallback(() => loggerRef.current.exportJSON(), []);
+  function getLog() {
+    return loggerRef.current.getEntries();
+  }
+
+  function clearLog() {
+    loggerRef.current.clear();
+  }
+
+  function exportLog() {
+    return loggerRef.current.exportJSON();
+  }
 
   return { log, getLog, clearLog, exportLog };
 }

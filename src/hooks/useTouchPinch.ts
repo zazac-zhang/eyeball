@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 import { useSimulationStore } from '../stores/simulationStore';
 import { MAX_INSERTION_DEPTH } from '../constants';
 
@@ -14,41 +14,35 @@ export function useTouchPinch() {
   const initialPinchDistance = useRef<number | null>(null);
   const initialDepth = useRef<number>(0);
 
-  const getPinchDistance = useCallback((touches: TouchList): number => {
+  function getPinchDistance(touches: TouchList): number {
     if (touches.length < 2) return 0;
     const dx = touches[0].clientX - touches[1].clientX;
     const dy = touches[0].clientY - touches[1].clientY;
     return Math.sqrt(dx * dx + dy * dy);
-  }, []);
+  }
 
-  const handleTouchStart = useCallback(
-    (e: TouchEvent) => {
-      if (mode !== 'EDIT' || !rcmPoint) return;
-      if (e.touches.length === 2) {
-        initialPinchDistance.current = getPinchDistance(e.touches);
-        initialDepth.current = useSimulationStore.getState().insertionDepth;
-      }
-    },
-    [mode, rcmPoint, getPinchDistance]
-  );
+  function handleTouchStart(e: TouchEvent) {
+    if (mode !== 'EDIT' || !rcmPoint) return;
+    if (e.touches.length === 2) {
+      initialPinchDistance.current = getPinchDistance(e.touches);
+      initialDepth.current = useSimulationStore.getState().insertionDepth;
+    }
+  }
 
-  const handleTouchMove = useCallback(
-    (e: TouchEvent) => {
-      if (mode !== 'EDIT' || !rcmPoint) return;
-      if (e.touches.length === 2 && initialPinchDistance.current !== null) {
-        e.preventDefault();
-        const currentDistance = getPinchDistance(e.touches);
-        const delta = (currentDistance - initialPinchDistance.current) / 50; // Scale factor
-        const newDepth = Math.max(0, Math.min(initialDepth.current + delta, MAX_INSERTION_DEPTH));
-        setInsertionDepth(newDepth);
-      }
-    },
-    [mode, rcmPoint, setInsertionDepth, getPinchDistance]
-  );
+  function handleTouchMove(e: TouchEvent) {
+    if (mode !== 'EDIT' || !rcmPoint) return;
+    if (e.touches.length === 2 && initialPinchDistance.current !== null) {
+      e.preventDefault();
+      const currentDistance = getPinchDistance(e.touches);
+      const delta = (currentDistance - initialPinchDistance.current) / 50;
+      const newDepth = Math.max(0, Math.min(initialDepth.current + delta, MAX_INSERTION_DEPTH));
+      setInsertionDepth(newDepth);
+    }
+  }
 
-  const handleTouchEnd = useCallback(() => {
+  function handleTouchEnd() {
     initialPinchDistance.current = null;
-  }, []);
+  }
 
   useEffect(() => {
     const canvas = document.querySelector('canvas');
@@ -63,5 +57,5 @@ export function useTouchPinch() {
       canvas.removeEventListener('touchmove', handleTouchMove);
       canvas.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [handleTouchStart, handleTouchMove, handleTouchEnd]);
+  });
 }

@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+import react, { reactCompilerPreset } from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
 // https://vite.dev/config/
@@ -10,5 +10,9 @@ export default defineConfig({
     const name = repo.split('/')[1] ?? '';
     return `/${name}/`;
   })(),
-  plugins: [react(), tailwindcss()],
+  plugins: [
+    react(),
+    reactCompilerPreset(),
+    tailwindcss(),
+  ],
 });
