@@ -4,7 +4,8 @@ import { useSimulationStore } from '../../stores/simulationStore';
 import { computeNeedlePose, type RCMConfig } from '../../lib/rcm';
 import { MAX_INSERTION_DEPTH, MAX_TILT_ANGLE } from '../../constants';
 import { NeedleShaft } from './NeedleShaft';
-import { NeedleTip } from './NeedleTip';
+import { CurvedNeedleTip } from './CurvedNeedleTip';
+import { NeedleHolder } from './NeedleHolder';
 
 // How much of the needle shaft is visible outside the eyeball (mm)
 const OUTSIDE_LENGTH = 15;
@@ -46,8 +47,10 @@ export function Needle() {
     <group ref={groupRef} matrixAutoUpdate={false}>
       {/* Shaft extends from -OUTSIDE_LENGTH to +d along local z */}
       <NeedleShaft length={totalShaftLength} offset={-(OUTSIDE_LENGTH - d) / 2} />
-      {/* Tip is at +d along local z (relative to RCM origin) */}
-      <NeedleTip position={[0, 0, d]} />
+      {/* Curved tip is at +d along local z (relative to RCM origin) */}
+      <CurvedNeedleTip position={[0, 0, d]} />
+      {/* Needle holder at the proximal end (-OUTSIDE_LENGTH) */}
+      <NeedleHolder position={[0, 0, -OUTSIDE_LENGTH]} />
     </group>
   );
 }

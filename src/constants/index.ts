@@ -12,6 +12,7 @@ export const COLORS = {
   limbus: '#a0c4e8',
   needleShaft: '#c0c0c0',
   needleTip: '#e0e0e0',
+  needleHolder: '#a0a0a0',
   trajectory: '#ff4444',
   rcmIndicator: '#44ff88',
   hudBg: 'rgba(10, 10, 30, 0.85)',
