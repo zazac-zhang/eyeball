@@ -14,11 +14,13 @@ import { Lighting } from './Lighting';
 import { ScleraClickHandler } from './ScleraClickHandler';
 import { useTrajectoryRecorder } from '../../hooks/useTrajectory';
 import { useTouchPinch } from '../../hooks/useTouchPinch';
+import { useChartDataCollector } from '../../hooks/useChartDataCollector';
 import { useSimulationStore } from '../../stores/simulationStore';
 
 export function Scene() {
   useTrajectoryRecorder();
   useTouchPinch();
+  useChartDataCollector();
   const mode = useSimulationStore((s) => s.mode);
 
   return (

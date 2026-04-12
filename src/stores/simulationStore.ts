@@ -6,6 +6,7 @@ import { MAX_INSERTION_DEPTH, MAX_TILT_ANGLE } from '../constants';
 
 const MAX_TRAIL_POINTS = 5000;
 const MAX_HISTORY = 50;
+const MAX_CHART_POINTS = 100; // Keep last 100 data points for chart
 
 export interface RCMPoint {
   id: string;
@@ -38,6 +39,9 @@ export interface SimulationState {
   trailPoints: Vec3[];
   trailData: TrailPoint[];
 
+  // Real-time chart data
+  chartData: Array<{ timestamp: number; depth: number }>;
+
   // History for undo/redo
   history: HistoryState[];
   historyIndex: number;
@@ -62,6 +66,8 @@ export interface SimulationState {
   addTrailPoint: (point: Vec3, tiltAlpha: number, tiltBeta: number, insertionDepth: number) => void;
   importTrailData: (data: TrailPoint[]) => void;
   clearTrails: () => void;
+  addChartDataPoint: (depth: number) => void;
+  clearChartData: () => void;
   togglePlayback: () => void;
   setPlaybackSpeed: (speed: number) => void;
   setPlaybackIndex: (index: number) => void;
@@ -120,6 +126,7 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
   phase: Phase.IDLE,
   trailPoints: [],
   trailData: [],
+  chartData: [],
   history: [],
   historyIndex: -1,
   canUndo: false,
@@ -251,8 +258,24 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
     });
   },
 
+  addChartDataPoint: (depth) => {
+    set((state) => {
+      const newPoint = { timestamp: Date.now(), depth };
+      const newChartData = [...state.chartData, newPoint];
+      // Keep only the last MAX_CHART_POINTS points
+      if (newChartData.length > MAX_CHART_POINTS) {
+        newChartData.splice(0, newChartData.length - MAX_CHART_POINTS);
+      }
+      return { chartData: newChartData };
+    });
+  },
+
+  clearChartData: () => {
+    set({ chartData: [] });
+  },
+
   clearTrails: () => {
-    set({ trailPoints: [], trailData: [] });
+    set({ trailPoints: [], trailData: [], chartData: [] });
   },
 
   importTrailData: (data: TrailPoint[]) => {
@@ -384,6 +407,7 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
       phase: Phase.IDLE,
       trailPoints: [],
       trailData: [],
+      chartData: [],
       history: [],
       historyIndex: -1,
       canUndo: false,

@@ -4,6 +4,7 @@ import { KinematicsPanel } from './components/hud/KinematicsPanel';
 import { ControlPanel } from './components/hud/ControlPanel';
 import { ModePanel } from './components/hud/ModePanel';
 import { RCMPointList } from './components/hud/RCMPointList';
+import { RealTimeChart } from './components/hud/RealTimeChart';
 import { useThemeStore } from './stores/themeStore';
 import './index.css';
 
@@ -30,6 +31,7 @@ function App() {
         </div>
       </div>
       <RCMPointList />
+      <RealTimeChart />
     </div>
   );
 }
