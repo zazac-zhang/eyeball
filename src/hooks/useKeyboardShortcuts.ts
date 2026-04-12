@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useSimulationStore } from '../stores/simulationStore';
 import { useKeyBindingsStore } from '../stores/keyBindingsStore';
+import { useActionLogger } from './useActionLogger';
 import { MAX_TILT_ANGLE } from '../constants';
 
 /**
@@ -25,6 +26,7 @@ import { MAX_TILT_ANGLE } from '../constants';
  */
 export function useKeyboardShortcuts() {
   const keyBindings = useKeyBindingsStore((s) => s.keyBindings);
+  const logAction = useActionLogger().log;
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -38,13 +40,13 @@ export function useKeyboardShortcuts() {
       if (e.key === kb.undo && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
         if (e.shiftKey) {
-          // Ctrl+Shift+Z = Redo
           if (store.canRedo) {
+            logAction('REDO');
             store.redo();
           }
         } else {
-          // Ctrl+Z = Undo
           if (store.canUndo) {
+            logAction('UNDO');
             store.undo();
           }
         }
@@ -54,6 +56,7 @@ export function useKeyboardShortcuts() {
       if (e.key === kb.redo && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
         if (store.canRedo) {
+          logAction('REDO');
           store.redo();
         }
         return;
@@ -61,49 +64,63 @@ export function useKeyboardShortcuts() {
 
       // Mode switching (works in any mode)
       if (e.key === kb.modeView || e.key === kb.modeView.toUpperCase()) {
+        logAction('MODE_SWITCH', { mode: 'VIEW' });
         store.setMode('VIEW');
         return;
       }
       if (e.key === kb.modePlace || e.key === kb.modePlace.toUpperCase()) {
         if (!rcmPoint) {
+          logAction('MODE_SWITCH', { mode: 'PLACE' });
           store.setMode('PLACE');
         }
         return;
       }
       if (e.key === kb.modeEdit || e.key === kb.modeEdit.toUpperCase()) {
         if (rcmPoint) {
+          logAction('MODE_SWITCH', { mode: 'EDIT' });
           store.setMode('EDIT');
         }
         return;
       }
       if (e.key === kb.modeReplay || e.key === kb.modeReplay.toUpperCase()) {
         if (trailData.length > 0) {
+          logAction('MODE_SWITCH', { mode: 'REPLAY' });
           store.setMode('REPLAY');
         }
         return;
       }
 
       if (e.key === kb.reset) {
+        logAction('RESET');
         store.reset();
       } else if (e.key === kb.clearTrails || e.key === kb.clearTrails.toUpperCase()) {
+        logAction('CLEAR_TRAILS');
         store.clearTrails();
       } else if (e.key === kb.insertUp && mode === 'EDIT') {
         e.preventDefault();
+        logAction('INSERT_DEPTH', { delta: 0.5, from: store.insertionDepth });
         store.setInsertionDepth(store.insertionDepth + 0.5);
       } else if (e.key === kb.withdrawDown && mode === 'EDIT') {
         e.preventDefault();
+        logAction('WITHDRAW_DEPTH', { delta: 0.5, from: store.insertionDepth });
         store.setInsertionDepth(store.insertionDepth - 0.5);
       } else if (e.key === kb.rotateLeft && mode === 'EDIT') {
+        logAction('ROTATE_LEFT', { beta: store.tiltBeta });
         store.setTiltAngles(store.tiltAlpha, store.tiltBeta - 0.05);
       } else if (e.key === kb.rotateRight && mode === 'EDIT') {
+        logAction('ROTATE_RIGHT', { beta: store.tiltBeta });
         store.setTiltAngles(store.tiltAlpha, store.tiltBeta + 0.05);
       } else if (e.key === kb.preset1 && mode === 'EDIT') {
+        logAction('PRESET_ANGLE', { angle: '0deg' });
         store.setTiltAngles(0, 0);
       } else if (e.key === kb.preset2 && mode === 'EDIT') {
+        logAction('PRESET_ANGLE', { angle: '15deg' });
         store.setTiltAngles(Math.PI / 12, 0);
       } else if (e.key === kb.preset3 && mode === 'EDIT') {
+        logAction('PRESET_ANGLE', { angle: '30deg' });
         store.setTiltAngles(Math.PI / 6, 0);
       } else if (e.key === kb.preset4 && mode === 'EDIT') {
+        logAction('PRESET_ANGLE', { angle: '45deg' });
         store.setTiltAngles(MAX_TILT_ANGLE, 0);
       }
     };

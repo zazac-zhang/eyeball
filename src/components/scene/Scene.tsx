@@ -10,6 +10,7 @@ import { NormalIndicator } from '../trajectory/NormalIndicator';
 import { SafetyCone } from '../trajectory/SafetyCone';
 import { ObjectLabels } from '../trajectory/ObjectLabels';
 import { CollisionIndicator } from '../trajectory/CollisionIndicator';
+import { Annotations3D } from '../trajectory/Annotations3D';
 import { Lighting } from './Lighting';
 import { ScleraClickHandler } from './ScleraClickHandler';
 import { useTrajectoryRecorder } from '../../hooks/useTrajectory';
@@ -39,6 +40,7 @@ export function Scene() {
       <NormalIndicator />
       <SafetyCone />
       <ObjectLabels />
+      <Annotations3D />
       <CollisionIndicator />
       <ScleraClickHandler />
       <OrbitControls

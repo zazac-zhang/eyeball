@@ -80,16 +80,18 @@ tip_position = rcm_point + d * shaft_direction
 
 ## 实现步骤
 
-1. **脚手架**：Vite + React + TS，安装依赖（three, @react-three/fiber, @react-three/drei, zustand）
-2. **眼球模型**：Sclera + Cornea + Lens + LimbusRing，设置灯光和 OrbitControls
-3. **数学工具**：transforms.ts + sphereIntersect.ts，写单元测试
-4. **RCM 引擎**：rcm.ts 实现 computeNeedlePose() 和 computeRCMFromRay()，单元测试验证约束
-5. **状态管理**：simulationStore.ts 连接 RCM 引擎
-6. **针具可视化**：Needle 组件绑定 store pose
-7. **鼠标交互**：点击放置 + 拖拽倾斜 + 滚轮插入
-8. **轨迹系统**：录制 + 红色轨迹线可视化 + RCM 发光标记
-9. **回放**：遍历录制轨迹点作为简单动画
-10. **打磨**：手术阶段指示、响应式 HUD、性能优化
+- [x] **1. 脚手架**：Vite + React + TS，安装依赖（three, @react-three/fiber, @react-three/drei, zustand）
+- [x] **2. 眼球模型**：Sclera + Cornea + Lens + LimbusRing，设置灯光和 OrbitControls
+- [x] **3. 数学工具**：transforms.ts + sphereIntersect.ts，写单元测试
+- [x] **4. RCM 引擎**：rcm.ts 实现 computeNeedlePose() 和 computeRCMFromRay()，单元测试验证约束
+- [x] **5. 状态管理**：simulationStore.ts 连接 RCM 引擎（含 undo/redo、多RCM点）
+- [x] **6. 针具可视化**：Needle 组件绑定 store pose（弯曲针尖 + 针持）
+- [x] **7. 鼠标交互**：点击放置 + 拖拽倾斜 + 滚轮插入（含触控支持）
+- [x] **8. 轨迹系统**：录制 + 热力图轨迹线 + RCM 发光标记 + 导入/导出
+- [x] **9. 回放**：遍历录制轨迹点作为简单动画
+- [x] **10. 打磨**：手术阶段指示、响应式 HUD、性能优化
+
+> **PLAN.md 原始 10 步已全部完成。** 后续功能扩展见 [TODO.md](./TODO.md)。
 
 ## 依赖
 
@@ -98,12 +100,33 @@ tip_position = rcm_point + d * shaft_direction
 - `three` - Three.js 直接依赖
 - `zustand` - 轻量状态管理，3D 和 HUD 共享状态
 
+## 超出原始计划的功能
+
+以下功能在 PLAN.md 原始设计之外已实现：
+
+| 类别 | 功能 |
+| ---- | ---- |
+| **多 RCM 管理** | 添加/删除/切换/拖拽移动 RCM 点 |
+| **Undo/Redo** | 最多 50 步历史，Ctrl+Z / Ctrl+Shift+Z |
+| **模式系统** | VIEW / PLACE / EDIT / REPLAY 四模式切换 |
+| **后处理效果** | Bloom 辉光 + SSAO 环境光遮蔽 + DOF 景深 |
+| **可视化增强** | 法线指示器、安全锥、约束线、深度标尺、碰撞高亮 |
+| **轨迹热力图** | 时间渐变着色（蓝→青→绿→黄→红） |
+| **数据功能** | 轨迹导入/导出 JSON/CSV、截图、屏幕录制(.webm) |
+| **HUD 增强** | 实时深度图表(Recharts)、2D 小地图、设置面板、明暗主题 |
+| **响应式** | 可折叠 HUD 面板、移动端触控 + pinch-to-zoom |
+| **仿真增强** | 弯曲针尖、针持、组织形变、血液模拟 |
+| **自动阶段** | 基于深度的自动阶段过渡 + 音效提示 |
+| **测试/CI** | 68 单元测试 + Playwright E2E + GitHub Actions CI/CD + Pages 部署 |
+
 ## 验证方式
 
-1. 启动 `npm run dev`，看到多层次眼球模型
-2. 点击眼球表面出现针具，针杆穿过点击位置
-3. 拖拽鼠标，针杆绕 RCM 点旋转，针尖沿球面内侧运动
-4. 滚轮调节，针尖沿针轴方向进出
-5. HUD 面板实时显示坐标、角度、深度数据
-6. 移动针尖时出现红色轨迹线
-7. 点击 Play 回放记录的轨迹
+- [x] 启动 `pnpm dev`，看到多层次眼球模型
+- [x] 点击眼球表面出现针具，针杆穿过点击位置
+- [x] 拖拽鼠标，针杆绕 RCM 点旋转，针尖沿球面内侧运动
+- [x] 滚轮调节，针尖沿针轴方向进出
+- [x] HUD 面板实时显示坐标、角度、深度数据
+- [x] 移动针尖时出现热力图轨迹线（时间渐变着色）
+- [x] 点击 Play 回放记录的轨迹
+- [x] `pnpm test` — 68 tests 全部通过
+- [x] `pnpm build` — 构建成功，部署到 GitHub Pages

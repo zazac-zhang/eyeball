@@ -3,6 +3,7 @@ import { type ThreeEvent } from '@react-three/fiber';
 import { useSimulationStore } from '../stores/simulationStore';
 import { computeRCMFromRay } from '../lib/rcm';
 import { EYEBALL_RADIUS, MAX_INSERTION_DEPTH, MAX_TILT_ANGLE } from '../constants';
+import { useActionLogger } from './useActionLogger';
 import type { Vec3 } from '../types';
 
 /**
@@ -16,6 +17,7 @@ export function useMouseControl() {
   const isDragging = useRef(false);
   const isDraggingRCM = useRef(false);
   const lastMouse = useRef({ x: 0, y: 0 });
+  const logAction = useActionLogger().log;
 
   const mode = useSimulationStore((s) => s.mode);
   const addRCMPoint = useSimulationStore((s) => s.addRCMPoint);
@@ -39,6 +41,10 @@ export function useMouseControl() {
       if (!result) return;
 
       e.stopPropagation();
+      logAction('RCM_PLACED', {
+        point: result.rcmPoint,
+        normal: result.surfaceNormal,
+      });
       addRCMPoint(result.rcmPoint, result.surfaceNormal);
     },
     [mode, addRCMPoint]
