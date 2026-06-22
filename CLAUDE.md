@@ -145,3 +145,17 @@ src/
 - **Trail points**: Recorded every 50ms during manipulation, capped at 5000 points to prevent unbounded memory growth.
 - **Force feedback visualization**: Needle tip color encodes simulated insertion force (silver → pink → orange → red) based on depth (60%) + tilt (40%).
 - **Tests**: Located in `src/lib/*.test.ts`, cover transforms and RCM kinematics.
+
+## Agent skills
+
+### Issue tracker
+
+Issues are tracked as GitHub Issues via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Five canonical roles use their default label strings. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context layout — one `CONTEXT.md` + `docs/adr/` at repo root. See `docs/agents/domain.md`.

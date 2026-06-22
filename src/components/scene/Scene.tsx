@@ -1,4 +1,4 @@
-import { OrbitControls } from '@react-three/drei';
+import { OrbitControls, Environment } from '@react-three/drei';
 import { EffectComposer, Bloom, SSAO, DepthOfField } from '@react-three/postprocessing';
 import { Eyeball } from '../eyeball/Eyeball';
 import { Needle } from '../needle/Needle';
@@ -43,6 +43,7 @@ export function Scene() {
       <Annotations3D />
       <CollisionIndicator />
       <ScleraClickHandler />
+      <Environment preset="studio" />
       <OrbitControls
         enabled={mode !== 'EDIT'}
         enablePan={false}
@@ -52,15 +53,15 @@ export function Scene() {
       />
       <EffectComposer>
         <Bloom
-          luminanceThreshold={0.8}
+          luminanceThreshold={0.85}
           luminanceSmoothing={0.9}
           mipmapBlur
-          intensity={1.5}
+          intensity={0.8}
         />
         <SSAO
           samples={32}
-          radius={0.1}
-          intensity={0.5}
+          radius={0.08}
+          intensity={0.35}
           bias={0.2}
         />
         <DepthOfField
