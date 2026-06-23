@@ -11,7 +11,7 @@ export function RCMPointList() {
   if (rcmPoints.length === 0) return null;
 
   return (
-    <div className="pointer-events-auto absolute top-4 left-4 z-10 min-w-[200px] rounded-lg border border-blue-500/30 bg-gray-950/85 p-3 text-blue-100 backdrop-blur">
+    <div className="pointer-events-auto absolute top-4 left-1/2 z-10 min-w-[200px] -translate-x-1/2 rounded-lg border border-blue-500/30 bg-gray-950/85 p-3 text-blue-100 backdrop-blur">
       <h4 className="mb-2 border-b border-blue-500/20 pb-1 text-sm font-semibold text-blue-400">RCM Points</h4>
       <div className="space-y-1">
         {rcmPoints.map((rcm: RCMPoint, index: number) => (

@@ -77,7 +77,10 @@ export function HUDLayout({
           <div className="max-w-[45%]">{topLeft}</div>
           <div className="max-w-[45%]">{topRight}</div>
         </div>
-        <div className="flex justify-end">{bottomRight}</div>
+        <div className="flex items-end justify-between gap-2">
+          <div className="max-w-[45%]">{bottomLeft}</div>
+          <div className="max-w-[45%]">{bottomRight}</div>
+        </div>
       </div>
     );
   }
@@ -88,7 +91,10 @@ export function HUDLayout({
         {topLeft}
         {topRight}
       </div>
-      <div className="flex justify-end">{bottomRight}</div>
+      <div className="flex items-end justify-between">
+        {bottomLeft}
+        {bottomRight}
+      </div>
     </div>
   );
 }

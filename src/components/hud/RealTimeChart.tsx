@@ -34,7 +34,7 @@ export function RealTimeChart() {
 
   if (chartData.length < 2 && mode !== 'EDIT') {
     return (
-      <div className="pointer-events-auto fixed inset-x-2 bottom-2 rounded-lg border border-blue-500/30 bg-gray-950/85 p-3 text-blue-100 backdrop-blur sm:min-w-[300px] sm:p-4 lg:bottom-4 lg:left-4 lg:w-auto lg:max-w-[calc(100vw-2rem)]">
+      <div className="pointer-events-auto fixed bottom-20 left-1/2 -translate-x-1/2 rounded-lg border border-blue-500/30 bg-gray-950/85 p-3 text-blue-100 backdrop-blur sm:bottom-24 sm:min-w-[300px] sm:p-4 lg:w-auto lg:max-w-[400px]">
         <h3 className="mb-2 border-b border-blue-500/20 pb-1 text-xs font-semibold tracking-wider text-blue-400 uppercase sm:mb-3 sm:text-sm">
           Depth Chart
         </h3>
@@ -46,7 +46,7 @@ export function RealTimeChart() {
   }
 
   return (
-    <div className="pointer-events-auto fixed inset-x-2 bottom-2 rounded-lg border border-blue-500/30 bg-gray-950/85 p-3 text-blue-100 backdrop-blur sm:min-w-[300px] sm:p-4 lg:bottom-4 lg:left-4 lg:w-auto lg:max-w-[calc(100vw-2rem)]">
+    <div className="pointer-events-auto fixed bottom-20 left-1/2 -translate-x-1/2 rounded-lg border border-blue-500/30 bg-gray-950/85 p-3 text-blue-100 backdrop-blur sm:bottom-24 sm:min-w-[300px] sm:p-4 lg:w-auto lg:max-w-[500px]">
       <div className="mb-2 flex items-center justify-between border-b border-blue-500/20 pb-1 sm:mb-3 sm:pb-2">
         <h3 className="text-xs font-semibold tracking-wider text-blue-400 uppercase sm:text-sm">
           Depth Chart

@@ -31,20 +31,17 @@ function App() {
         }
         topRight={<ModePanel />}
         bottomRight={
-          <HUDPanel title="Controls" defaultOpen={false}>
+          <HUDPanel title="Controls" defaultOpen={true}>
             <ControlPanel />
           </HUDPanel>
         }
         bottomLeft={
-          <HUDPanel title="Minimap" defaultOpen={false}>
+          <HUDPanel title="Minimap" defaultOpen={true}>
             <MiniMap />
           </HUDPanel>
         }
       />
       <RCMPointList />
-      <div className="pointer-events-none absolute bottom-4 left-4 hidden lg:block">
-        <MiniMap />
-      </div>
       <RealTimeChart />
     </div>
   );
