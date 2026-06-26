@@ -1,8 +1,6 @@
-import { useRef, useMemo, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 import * as THREE from 'three';
-import { useSimulationStore } from '../../stores/simulationStore';
-import { computeNeedlePose, type RCMConfig } from '../../lib/rcm';
-import { MAX_INSERTION_DEPTH, MAX_TILT_ANGLE } from '../../constants';
+import { useNeedlePose } from '../../hooks/useNeedlePose';
 import { NeedleShaft } from './NeedleShaft';
 import { CurvedNeedleTip } from './CurvedNeedleTip';
 import { NeedleHolder } from './NeedleHolder';
@@ -12,27 +10,10 @@ const OUTSIDE_LENGTH = 15;
 
 export function Needle() {
   const groupRef = useRef<THREE.Group>(null);
-  const rcmPoint = useSimulationStore((s) => s.rcmPoint);
-  const surfaceNormal = useSimulationStore((s) => s.surfaceNormal);
-  const tiltAlpha = useSimulationStore((s) => s.tiltAlpha);
-  const tiltBeta = useSimulationStore((s) => s.tiltBeta);
-  const insertionDepth = useSimulationStore((s) => s.insertionDepth);
+  const pose = useNeedlePose();
 
-  const pose = useMemo(() => {
-    if (!rcmPoint || !surfaceNormal) return null;
-    const config: RCMConfig = {
-      rcmPoint,
-      surfaceNormal,
-      maxInsertionDepth: MAX_INSERTION_DEPTH,
-      maxTiltAngle: MAX_TILT_ANGLE,
-    };
-    return computeNeedlePose(config, tiltAlpha, tiltBeta, insertionDepth);
-  }, [rcmPoint, surfaceNormal, tiltAlpha, tiltBeta, insertionDepth]);
-
-  // Build the full needle transform as a Three.js matrix
   useEffect(() => {
     if (!groupRef.current || !pose) return;
-    // pose.needleTransform is column-major 4x4
     groupRef.current.matrix.fromArray(Array.from(pose.needleTransform));
     groupRef.current.matrixWorldNeedsUpdate = true;
   }, [pose]);

@@ -1,7 +1,5 @@
-import { useMemo } from 'react';
 import { useSimulationStore } from '../../stores/simulationStore';
-import { computeNeedlePose, type RCMConfig } from '../../lib/rcm';
-import { MAX_INSERTION_DEPTH, MAX_TILT_ANGLE } from '../../constants';
+import { useNeedlePose } from '../../hooks/useNeedlePose';
 import { usePhaseTransitionFlash } from '../../hooks/usePhaseTransition';
 
 const phaseColorMap: Record<string, string> = {
@@ -13,24 +11,10 @@ const phaseColorMap: Record<string, string> = {
 };
 
 export function KinematicsPanel() {
-  const tiltAlpha = useSimulationStore((s) => s.tiltAlpha);
-  const tiltBeta = useSimulationStore((s) => s.tiltBeta);
-  const insertionDepth = useSimulationStore((s) => s.insertionDepth);
   const phase = useSimulationStore((s) => s.phase);
   const rcmPoint = useSimulationStore((s) => s.rcmPoint);
-  const surfaceNormal = useSimulationStore((s) => s.surfaceNormal);
   const isPhaseTransitioning = usePhaseTransitionFlash();
-
-  const pose = useMemo(() => {
-    if (!rcmPoint || !surfaceNormal) return null;
-    const config: RCMConfig = {
-      rcmPoint,
-      surfaceNormal,
-      maxInsertionDepth: MAX_INSERTION_DEPTH,
-      maxTiltAngle: MAX_TILT_ANGLE,
-    };
-    return computeNeedlePose(config, tiltAlpha, tiltBeta, insertionDepth);
-  }, [rcmPoint, surfaceNormal, tiltAlpha, tiltBeta, insertionDepth]);
+  const pose = useNeedlePose();
 
   return (
     <div className="pointer-events-auto w-full rounded-lg border border-blue-500/30 bg-gray-950/85 p-3 text-blue-100 backdrop-blur sm:min-w-[240px] sm:p-4">
