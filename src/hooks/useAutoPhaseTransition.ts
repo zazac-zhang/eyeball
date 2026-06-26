@@ -6,6 +6,9 @@ import { SurgicalPhase } from '../types';
  * Hook that automatically transitions surgical phases based on:
  * - INSERTING → WITHDRAWING: when depth reaches max for >1 second
  * - WITHDRAWING → COMPLETE: when depth returns to 0
+ *
+ * All transitions go through store actions (completeSurgery)
+ * which use the centralized transitionPhase() state machine.
  */
 export function useAutoPhaseTransition() {
   const phase = useSimulationStore((s) => s.phase);
@@ -13,7 +16,6 @@ export function useAutoPhaseTransition() {
   const maxDepthTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    // Clear any pending timer when phase changes
     if (maxDepthTimerRef.current) {
       clearTimeout(maxDepthTimerRef.current);
       maxDepthTimerRef.current = null;
