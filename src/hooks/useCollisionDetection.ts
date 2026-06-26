@@ -1,10 +1,12 @@
 import { useMemo } from 'react';
-import * as THREE from 'three';
-import { useSimulationStore } from '../stores/simulationStore';
+import { useNeedlePose } from './useNeedlePose';
 import { EYEBALL_RADIUS } from '../constants';
+import type { Vec3 } from '../types';
 
 /**
  * Detects collision between needle tip and eyeball surface.
+ *
+ * Derives tip position from useNeedlePose() — no duplicate direction math.
  *
  * Returns:
  * - isColliding: true if tip is within threshold distance of surface
@@ -12,47 +14,26 @@ import { EYEBALL_RADIUS } from '../constants';
  * - distance: distance from tip to surface
  */
 export function useCollisionDetection() {
-  const rcmPoint = useSimulationStore((s) => s.rcmPoint);
-  const surfaceNormal = useSimulationStore((s) => s.surfaceNormal);
-  const tiltAlpha = useSimulationStore((s) => s.tiltAlpha);
-  const tiltBeta = useSimulationStore((s) => s.tiltBeta);
-  const insertionDepth = useSimulationStore((s) => s.insertionDepth);
+  const pose = useNeedlePose();
 
   const collision = useMemo(() => {
-    if (!rcmPoint || !surfaceNormal) {
-      return { isColliding: false, collisionPoint: null, distance: Infinity };
+    if (!pose) {
+      return { isColliding: false, collisionPoint: null as Vec3 | null, distance: Infinity };
     }
 
-    // Compute needle direction from tilt angles
-    const normal = new THREE.Vector3(...surfaceNormal);
-    const up = new THREE.Vector3(0, 0, 1);
-    const right = new THREE.Vector3().crossVectors(normal, up).normalize();
+    const tip = pose.tipPosition;
+    const distanceFromCenter = Math.sqrt(tip[0] * tip[0] + tip[1] * tip[1] + tip[2] * tip[2]);
 
-    // Rotation around normal (beta) and elevation (alpha)
-    const direction = normal.clone();
-    direction.applyAxisAngle(right, tiltAlpha);
-    direction.applyAxisAngle(normal, tiltBeta);
-
-    // Tip position = RCM point + depth * direction
-    const tip = new THREE.Vector3(...rcmPoint).add(direction.clone().multiplyScalar(insertionDepth));
-
-    // Distance from center
-    const distanceFromCenter = tip.length();
-
-    // Check if tip is at or near surface (with small threshold)
     const threshold = 0.5; // 0.5mm threshold for visual feedback
     const distanceToSurface = Math.abs(distanceFromCenter - EYEBALL_RADIUS);
     const isColliding = distanceToSurface <= threshold;
 
-    // Find closest point on sphere surface
-    const collisionPoint = tip.clone().normalize().multiplyScalar(EYEBALL_RADIUS);
+    // Closest point on sphere surface
+    const norm = distanceFromCenter > 1e-10 ? EYEBALL_RADIUS / distanceFromCenter : 0;
+    const collisionPoint: Vec3 = [tip[0] * norm, tip[1] * norm, tip[2] * norm];
 
-    return {
-      isColliding,
-      collisionPoint: [collisionPoint.x, collisionPoint.y, collisionPoint.z] as [number, number, number],
-      distance: distanceToSurface,
-    };
-  }, [rcmPoint, surfaceNormal, tiltAlpha, tiltBeta, insertionDepth]);
+    return { isColliding, collisionPoint, distance: distanceToSurface };
+  }, [pose]);
 
   return collision;
 }
